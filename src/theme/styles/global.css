@@ -1,0 +1,55 @@
+/*
+ * ============================================================
+ *  KapiLabs Theme Override — Global CSS
+ *  ============================================================
+ *  To create this file:
+ *    mkdir -p src/theme/styles
+ *    cp src/core/styles/global.css src/theme/styles/global.css
+ *
+ *  Then edit this copy freely. The @kapi/ resolver serves
+ *  this file instead of src/core/styles/global.css.
+ *
+ *  Changes here survive framework updates — src/core/ is
+ *  replaced, but src/theme/ is never touched.
+ *
+ *  Tip: Run `pnpm kapi generate child-theme my-brand` to
+ *  scaffold all starter override files at once.
+ * ============================================================
+ */
+
+/* ── Typography ────────────────────────────────────────────── */
+/* Uncomment and customize:
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  line-height: 1.7;
+}
+h1, h2, h3 { font-weight: 700; letter-spacing: -0.02em; }
+*/
+
+/* ── Color overrides (alternative to CMS theme settings) ──── */
+/* Uncomment to force colors regardless of CMS settings:
+:root {
+  --color-primary: #7c3aed;
+  --color-secondary: #0ea5e9;
+  --color-text: #0f172a;
+  --color-background: #f8fafc;
+}
+*/
+
+/* ── Component tweaks ─────────────────────────────────────── */
+/* Uncomment to adjust specific component styles:
+.site-header { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.footer    { border-top: 3px solid var(--color-primary); }
+*/
+
+/* ── Layout adjustments ───────────────────────────────────── */
+/* Uncomment to change container width globally:
+.kapi-container { max-width: 1280px; }
+*/
+
+/* ── Print styles ─────────────────────────────────────────── */
+@media print {
+  .site-header,
+  .site-footer,
+  .sidebar { display: none; }
+}

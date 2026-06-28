@@ -1,0 +1,338 @@
+---
+import SiteLayout from "@kapi/layouts/SiteLayout.astro";
+import ContentBody from "@kapi/components/content/ContentBody.astro";
+import { getKnowledgeBaseArticle, getKnowledgeBaseTree } from "@kapi/cms";
+
+export async function getStaticPaths() {
+  // In SSR mode, this is not needed — slugs resolved dynamically.
+  // For SSG, implement getStaticPaths here.
+  return [];
+}
+
+const { slug } = Astro.params;
+const article = await getKnowledgeBaseArticle(slug || "");
+
+if (!article) {
+  return Astro.redirect("/knowledge-base", 404);
+}
+
+const tree = await getKnowledgeBaseTree();
+const categorySlug = article.category?.slug || "";
+---
+
+<SiteLayout
+  title={`${article.title} — Knowledge Base`}
+  description={article.excerpt || article.title}
+>
+  <main class="kb-article-page site-container">
+    <div class="kb-layout">
+      <aside class="kb-sidebar">
+        <nav aria-label="Knowledge Base categories">
+          <a href="/knowledge-base" class="kb-home-link">← Back to Knowledge Base</a>
+
+          <ul class="kb-tree">
+            {tree.categories.map((cat) => (
+              <li class:list={["tree-item", cat.slug === categorySlug && "active"]}>
+                <a
+                  href={`/knowledge-base/category/${cat.slug}`}
+                  class="tree-category"
+                >
+                  {cat.icon && <span class="tree-icon">{cat.icon}</span>}
+                  {cat.title} ({cat.articleCount || 0})
+                </a>
+                {cat.children && cat.children.length > 0 && (
+                  <ul class="tree-children">
+                    {cat.children.map((child) => (
+                      <li class:list={["tree-item", child.slug === categorySlug && "active"]}>
+                        <a href={`/knowledge-base/category/${child.slug}`}>
+                          {child.title} ({child.articleCount || 0})
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </aside>
+
+      <article class="kb-article">
+        <nav aria-label="Breadcrumb" class="kb-breadcrumbs">
+          <a href="/knowledge-base">Knowledge Base</a>
+          {article.category && (
+            <>
+              <span class="sep">/</span>
+              <a href={`/knowledge-base/category/${article.category.slug}`}>
+                {article.category.title}
+              </a>
+            </>
+          )}
+          <span class="sep">/</span>
+          <span>{article.title}</span>
+        </nav>
+
+        <h1>{article.title}</h1>
+
+        <div class="kb-meta">
+          {article.publishedAt && (
+            <time datetime={article.publishedAt}>
+              {new Date(article.publishedAt).toLocaleDateString()}
+            </time>
+          )}
+          {article.author && <span>by {article.author.name}</span>}
+          {article.tags && article.tags.length > 0 && (
+            <div class="kb-tags">
+              {article.tags.map((tag) => (
+                <span class="tag">{tag}</span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {article.excerpt && (
+          <p class="kb-excerpt">{article.excerpt}</p>
+        )}
+
+        <div class="kb-content">
+          {article.content && typeof article.content === "string" ? (
+            <div set:html={article.content} />
+          ) : article.content ? (
+            <ContentBody content={article.content as any} />
+          ) : (
+            <p>No content available.</p>
+          )}
+        </div>
+
+        {article.relatedArticles && article.relatedArticles.length > 0 && (
+          <section class="kb-related">
+            <h2>Related Articles</h2>
+            <ul>
+              {article.relatedArticles.map((related) => (
+                <li>
+                  <a href={`/knowledge-base/${related.slug}`}>
+                    {related.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+      </article>
+    </div>
+  </main>
+</SiteLayout>
+
+<style>
+  .kb-article-page {
+    padding: 2rem 0;
+  }
+
+  .kb-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 2rem;
+  }
+
+  .kb-sidebar {
+    position: sticky;
+    top: 80px;
+    height: fit-content;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+
+  .kb-home-link {
+    display: block;
+    margin-bottom: 1rem;
+    color: var(--color-secondary, #2563eb);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .kb-home-link:hover {
+    text-decoration: underline;
+  }
+
+  .kb-tree {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.5rem);
+    overflow: hidden;
+  }
+
+  .tree-item {
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+  }
+
+  .tree-item:last-child {
+    border-bottom: none;
+  }
+
+  .tree-item.active {
+    background: var(--color-soft-background, #f0f4ff);
+  }
+
+  .tree-category {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.65rem 0.85rem;
+    color: var(--color-text, #111827);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .tree-category:hover {
+    background: var(--color-soft-background, #f0f4ff);
+  }
+
+  .tree-icon {
+    font-size: 1rem;
+  }
+
+  .tree-children {
+    list-style: none;
+    padding: 0 0 0.5rem 1.25rem;
+    margin: 0;
+  }
+
+  .tree-children a {
+    display: block;
+    padding: 0.35rem 0.65rem;
+    color: var(--color-muted, #6b7280);
+    text-decoration: none;
+    font-size: 0.8rem;
+  }
+
+  .tree-children a:hover {
+    color: var(--color-secondary, #2563eb);
+  }
+
+  .tree-item.active > .tree-category,
+  .tree-item.active > a {
+    color: var(--color-secondary, #2563eb);
+  }
+
+  .kb-article {
+    min-width: 0;
+  }
+
+  .kb-breadcrumbs {
+    font-size: 0.85rem;
+    color: var(--color-muted, #6b7280);
+    margin-bottom: 1rem;
+  }
+
+  .kb-breadcrumbs a {
+    color: var(--color-secondary, #2563eb);
+    text-decoration: none;
+  }
+
+  .kb-breadcrumbs a:hover {
+    text-decoration: underline;
+  }
+
+  .sep {
+    margin: 0 0.4rem;
+  }
+
+  .kb-article h1 {
+    margin: 0 0 0.75rem;
+    font-size: 1.75rem;
+  }
+
+  .kb-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: var(--color-muted, #6b7280);
+  }
+
+  .kb-tags {
+    display: flex;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    background: var(--color-soft-background, #f0f4ff);
+    border-radius: 999px;
+    font-size: 0.75rem;
+  }
+
+  .kb-excerpt {
+    font-size: 1.1rem;
+    color: var(--color-muted, #6b7280);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: var(--color-soft-background, #f9fafb);
+    border-radius: var(--radius-md, 0.5rem);
+    border-left: 3px solid var(--color-secondary, #2563eb);
+  }
+
+  .kb-content {
+    line-height: 1.8;
+    font-size: 1rem;
+  }
+
+  .kb-content :global(h2) {
+    margin-top: 2rem;
+  }
+
+  .kb-content :global(pre) {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 1rem;
+    border-radius: var(--radius-md, 0.5rem);
+    overflow-x: auto;
+  }
+
+  .kb-related {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border, #e5e7eb);
+  }
+
+  .kb-related h2 {
+    font-size: 1.1rem;
+    margin: 0 0 0.75rem;
+  }
+
+  .kb-related ul {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .kb-related a {
+    color: var(--color-secondary, #2563eb);
+    text-decoration: none;
+  }
+
+  .kb-related a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 768px) {
+    .kb-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .kb-sidebar {
+      position: static;
+      max-height: none;
+    }
+  }
+</style>

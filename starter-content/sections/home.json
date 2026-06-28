@@ -1,0 +1,98 @@
+[
+  {
+    "_type": "sectionHero",
+    "type": "hero",
+    "eyebrow": "Full-Service Digital Agency",
+    "heading": "WE BUILD WEBSITES THAT WIN BUSINESS",
+    "text": "Apex Digital creates high-performance websites, SEO strategies, and brand identities that help businesses grow online. Fast, responsive, and built to convert.",
+    "buttonLabel": "Get a Free Quote",
+    "buttonUrl": "/contact-us"
+  },
+  {
+    "_type": "sectionServices",
+    "type": "services",
+    "heading": "What We Do",
+    "items": [
+      {
+        "title": "Web Design and Development",
+        "text": "We build fast, responsive websites that look great on every device. From simple landing pages to full CMS-powered sites, we deliver designs that convert visitors into customers.",
+        "url": "/services"
+      },
+      {
+        "title": "Search Engine Optimization",
+        "text": "Rank higher and get found by the right customers. Our SEO service covers technical audits, on-page optimization, content strategy, and local SEO to help you outrank the competition.",
+        "url": "/services"
+      },
+      {
+        "title": "Brand Identity and Strategy",
+        "text": "Your brand is your first impression. We develop complete brand identities — logo, colors, typography, and guidelines — that communicate who you are and what makes you different.",
+        "url": "/services"
+      }
+    ]
+  },
+  {
+    "_type": "sectionStats",
+    "type": "stats",
+    "heading": "Apex Digital By The Numbers",
+    "items": [
+      { "value": "150+", "label": "Projects Delivered" },
+      { "value": "98%", "label": "Client Satisfaction" },
+      { "value": "6+", "label": "Years in Business" }
+    ]
+  },
+  {
+    "_type": "sectionTestimonials",
+    "type": "testimonials",
+    "heading": "What Our Clients Say",
+    "items": [
+      {
+        "name": "Sarah M.",
+        "role": "Marketing Director",
+        "city": "Austin, TX",
+        "rating": 5,
+        "quote": "Working with Apex Digital completely transformed our online presence. Our organic traffic tripled within 4 months of launch."
+      },
+      {
+        "name": "James T.",
+        "role": "Founder",
+        "city": "Chicago, IL",
+        "rating": 5,
+        "quote": "The team delivered an outstanding website on time and on budget. Communication was excellent throughout the entire project."
+      },
+      {
+        "name": "Lisa R.",
+        "role": "CEO",
+        "city": "New York, NY",
+        "rating": 5,
+        "quote": "Our new brand identity is exactly what we needed. Professional, modern, and immediately recognizable. Highly recommend."
+      }
+    ]
+  },
+  {
+    "_type": "sectionCta",
+    "type": "cta",
+    "heading": "Ready to Grow Your Business Online?",
+    "text": "Let us talk about your project. We offer a free 30-minute strategy call — no commitment required.",
+    "buttonLabel": "Book a Free Call",
+    "buttonUrl": "/contact-us"
+  },
+  {
+    "_type": "sectionFaq",
+    "type": "faq",
+    "heading": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "How long does a website project take?",
+        "answer": "Most business websites take 4 to 8 weeks from kickoff to launch. The timeline depends on the scope, number of pages, and how quickly feedback is provided. We will give you a detailed project plan at the start of every engagement."
+      },
+      {
+        "question": "Do you work with small businesses?",
+        "answer": "Absolutely. Most of our clients are small and mid-size businesses. We have service packages designed for businesses at every stage — from brand-new startups to established companies looking to refresh their digital presence."
+      },
+      {
+        "question": "Will I be able to update the website myself?",
+        "answer": "Yes. We build all our websites on a CMS so you can update content, add blog posts, and make changes without any coding knowledge. We also provide a training session and documentation after launch."
+      }
+    ]
+  }
+]

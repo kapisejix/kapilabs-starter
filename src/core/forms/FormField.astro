@@ -1,0 +1,49 @@
+---
+const { field } = Astro.props;
+const id = `field-${field.name}`;
+---
+
+<div class="form-field form-field-{field.type}">
+  {field.type !== "hidden" && field.type !== "checkbox" && (
+    <label for={id}>
+      {field.label}
+      {field.required && <span aria-hidden="true">*</span>}
+    </label>
+  )}
+
+  {field.type === "textarea" ? (
+    <textarea
+      id={id}
+      name={field.name}
+      placeholder={field.placeholder || ""}
+      required={field.required}
+    ></textarea>
+  ) : field.type === "select" ? (
+    <select id={id} name={field.name} required={field.required}>
+      <option value="">Select</option>
+      {field.options?.map((option: any) => (
+        <option value={option}>{option}</option>
+      ))}
+    </select>
+  ) : field.type === "checkbox" ? (
+    <label class="checkbox-label">
+      <input
+        id={id}
+        type="checkbox"
+        name={field.name}
+        value="yes"
+        required={field.required}
+      />
+      <span>{field.label}</span>
+      {field.required && <span aria-hidden="true">*</span>}
+    </label>
+  ) : (
+    <input
+      id={id}
+      type={field.type || "text"}
+      name={field.name}
+      placeholder={field.placeholder || ""}
+      required={field.required}
+    />
+  )}
+</div>

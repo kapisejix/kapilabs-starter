@@ -1,0 +1,63 @@
+---
+export const prerender = false;
+
+import SiteLayout from "@kapi/layouts/SiteLayout.astro";
+import BlogSingle from "@kapi/blog-templates/BlogSingle.astro";
+import { getPost, getRelatedContent } from "@kapi/cms";
+import { createArticleSchema, createBreadcrumbSchema } from "@kapi/seo/schema";
+
+const slug = Astro.params.slug || "";
+const post = await getPost(slug);
+
+if (!post) {
+  return Astro.redirect("/404");
+}
+
+Astro.response.headers.set("Cache-Control", "public, max-age=0, s-maxage=600, stale-while-revalidate=300");
+
+const relatedPosts = await getRelatedContent({
+  type: "post",
+  slug,
+  categories: post.categories,
+  tags: post.tags,
+  limit: 3,
+});
+
+// Publisher name comes from BaseLayout which already fetches site settings.
+// Using a static fallback here avoids a duplicate API call.
+const articleJsonLd = createArticleSchema(
+  post,
+  Astro.url.href,
+  "KapiLabs"
+);
+
+const breadcrumbJsonLd = createBreadcrumbSchema([
+  { name: "Home", url: "/" },
+  { name: "Blog", url: "/blog" },
+  { name: post.seo?.breadcrumbTitle || post.title, url: Astro.url.href },
+]);
+
+// Respect visibility settings
+const hideBreadcrumbs = post.visibility?.hideBreadcrumbs;
+const jsonLd = hideBreadcrumbs ? [articleJsonLd] : [articleJsonLd, breadcrumbJsonLd];
+---
+
+<SiteLayout
+  title={post.seo?.title || post.title}
+  description={post.seo?.description || post.excerpt}
+  image={post.seo?.image || post.ogImage || post.featuredImage}
+  customCode={post.customCode}
+  ogType="article"
+  canonical={post.seo?.canonicalUrl}
+  noindex={post.seo?.noindex}
+  nofollow={post.seo?.nofollow}
+  twitterCard={post.seo?.twitterCard}
+  ogTitle={post.seo?.ogTitle}
+  ogDescription={post.seo?.ogDescription}
+  jsonLd={jsonLd}
+  visibility={post.visibility}
+  customBodyClass={post.customBodyClass}
+  themePreset={post.themePreset}
+>
+  <BlogSingle post={post} relatedPosts={relatedPosts} />
+</SiteLayout>

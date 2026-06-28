@@ -1,0 +1,41 @@
+---
+import FormRenderer from "@kapi/forms/FormRenderer.astro";
+import { sanitizeContent } from "@kapi/utils/sanitizeHtml";
+
+const { section } = Astro.props;
+const settings = section.settings || {};
+const showHeading = section.heading && !settings.hideTitle;
+---
+
+<section class="form-section">
+  {(showHeading || section.text) && (
+    <div class="form-section-header">
+      {showHeading && <h2>{section.heading}</h2>}
+      {section.text && <Fragment set:html={sanitizeContent(section.text)} />}
+    </div>
+  )}
+
+  {section.form ? (
+    <FormRenderer form={section.form} />
+  ) : (
+    <p>No form selected.</p>
+  )}
+</section>
+
+<style>
+  .form-section {
+    display: grid;
+    gap: var(--section-gap, var(--space-lg, 2rem));
+  }
+
+  .form-section-header {
+    display: grid;
+    gap: 0.5rem;
+    max-width: 760px;
+  }
+
+  .form-section-header h2,
+  .form-section-header p {
+    margin: 0;
+  }
+</style>

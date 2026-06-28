@@ -1,0 +1,21 @@
+---
+import type { CmsImage } from "@kapi/cms/types";
+
+interface Props {
+  image: CmsImage;
+  class?: string;
+  loading?: "lazy" | "eager";
+}
+
+const { image, class: className, loading = "lazy" } = Astro.props;
+---
+
+<img
+  src={image.src}
+  alt={image.alt || ""}
+  width={image.width}
+  height={image.height}
+  class={className}
+  loading={loading}
+  decoding="async"
+/>

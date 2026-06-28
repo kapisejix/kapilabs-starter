@@ -1,0 +1,238 @@
+---
+export const prerender = false;
+
+import { isAdminAuthorized, generateAdminToken } from "@kapi/forms/admin-auth";
+import { loadRegistry } from "@kapi/marketplace/registry";
+
+const FORM_ADMIN_KEY = process.env.FORM_ADMIN_KEY || import.meta.env.FORM_ADMIN_KEY;
+
+const headerKey = Astro.request.headers.get("x-admin-key");
+const cookieHeader = Astro.request.headers.get("cookie");
+const authorized = isAdminAuthorized(headerKey, cookieHeader);
+
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function renderLoginPage(error: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login — Plugins</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #f3f4f6; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .box { max-width: 400px; width: 100%; margin: 2rem; padding: 2rem; background: #fff; border-radius: .5rem; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    h1 { margin-top: 0; font-size: 1.5rem; }
+    label { display: block; margin-bottom: .5rem; font-weight: 600; }
+    input[type=password] { width: 100%; padding: .6rem; border: 1px solid #ccc; border-radius: .25rem; font-size: 1rem; box-sizing: border-box; }
+    button { width: 100%; padding: .7rem; background: #2563eb; color: #fff; border: 0; border-radius: .25rem; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
+    .err { color: #dc2626; font-size: .9rem; margin-bottom: 1rem; padding: .5rem; background: #fef2f2; border-radius: .25rem; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Admin Login</h1>
+    ${error ? `<div class="err">${escapeHtml(error)}</div>` : ""}
+    <form method="post" action="/admin/plugins">
+      <label for="key">Admin Key</label>
+      <input type="password" id="key" name="key" required autocomplete="off" />
+      <button type="submit">Sign In</button>
+    </form>
+  </div>
+</body>
+</html>`;
+}
+
+let loginError = "";
+if (!authorized && Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+    const submittedKey = formData.get("key")?.toString() || "";
+    if (submittedKey === FORM_ADMIN_KEY) {
+      const { cookie } = generateAdminToken();
+      return new Response(null, {
+        status: 302,
+        headers: { "Location": "/admin/plugins", "Set-Cookie": cookie },
+      });
+    } else {
+      loginError = "Invalid admin key.";
+    }
+  } catch {
+    loginError = "Invalid request.";
+  }
+}
+
+if (!authorized && Astro.request.method !== "POST") {
+  return new Response(renderLoginPage(loginError), { status: 401, headers: { "Content-Type": "text/html" } });
+}
+
+if (!authorized) {
+  return new Response(renderLoginPage(loginError), { status: 401, headers: { "Content-Type": "text/html" } });
+}
+
+const typeFilter = Astro.url.searchParams.get("type") || "";
+const search = Astro.url.searchParams.get("search") || "";
+
+const allPackages = loadRegistry();
+const filtered = allPackages.filter((pkg) => {
+  const m = pkg.manifest;
+  const matchType = !typeFilter || m.type === typeFilter;
+  const matchSearch = !search ||
+    m.name.toLowerCase().includes(search.toLowerCase()) ||
+    m.label.toLowerCase().includes(search.toLowerCase()) ||
+    (m.description || "").toLowerCase().includes(search.toLowerCase()) ||
+    (m.keywords || []).some((k: string) => k.toLowerCase().includes(search.toLowerCase()));
+  return matchType && matchSearch;
+});
+
+const typeLabels: Record<string, string> = {
+  "child-theme": "Child Theme",
+  plugin: "Plugin",
+  starter: "Starter Kit",
+  theme: "Theme",
+  "section-pack": "Section Pack",
+  "widget-pack": "Widget Pack",
+  blueprint: "Blueprint",
+};
+
+const typeBadgeColor: Record<string, string> = {
+  "child-theme": "#7c3aed",
+  plugin: "#2563eb",
+  starter: "#0891b2",
+  theme: "#7c3aed",
+  "section-pack": "#16a34a",
+  "widget-pack": "#d97706",
+  blueprint: "#dc2626",
+};
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plugins &amp; Themes — Admin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #f9fafb; margin: 0; padding: 2rem; }
+    .container { max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 1.75rem; margin-bottom: .25rem; }
+    .breadcrumb { font-size: .875rem; color: #6b7280; margin-bottom: 2rem; }
+    .breadcrumb a { color: #2563eb; text-decoration: none; }
+    .filters { display: flex; gap: .75rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+    .filters input[type=text], .filters select { padding: .5rem .75rem; border: 1px solid #d1d5db; border-radius: .25rem; font-size: .9rem; }
+    .filters input[type=text] { min-width: 220px; }
+    .filters button { padding: .5rem 1rem; background: #2563eb; color: #fff; border: 0; border-radius: .25rem; cursor: pointer; font-size: .9rem; }
+    .count { font-size: .875rem; color: #6b7280; margin-bottom: 1rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: .5rem; padding: 1.25rem; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: .75rem; }
+    .card-title { font-size: 1rem; font-weight: 600; margin: 0 0 .2rem; }
+    .card-version { font-size: .75rem; color: #9ca3af; }
+    .badge { display: inline-block; padding: .2rem .5rem; border-radius: .25rem; font-size: .7rem; font-weight: 600; color: #fff; text-transform: uppercase; }
+    .card-desc { font-size: .85rem; color: #4b5563; margin: 0 0 .75rem; line-height: 1.4; }
+    .card-meta { display: flex; gap: 1rem; font-size: .8rem; color: #9ca3af; margin-bottom: 1rem; }
+    .card-footer { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .btn-install { padding: .45rem .9rem; background: #2563eb; color: #fff; border: 0; border-radius: .25rem; cursor: pointer; font-size: .8rem; }
+    .btn-install:hover { background: #1d4ed8; }
+    .btn-docs { padding: .45rem .9rem; background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; border-radius: .25rem; text-decoration: none; font-size: .8rem; }
+    .stars { color: #f59e0b; }
+    .install-info { display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: .25rem; padding: .75rem; margin-top: .75rem; font-size: .8rem; }
+    .install-info code { display: block; background: #1e293b; color: #e2e8f0; padding: .5rem .75rem; border-radius: .25rem; margin-top: .5rem; font-family: monospace; white-space: pre; }
+    .empty { text-align: center; padding: 3rem; color: #9ca3af; }
+    .scaffold-box { margin-top: 2.5rem; padding: 1.25rem; background: #fff; border: 1px solid #e5e7eb; border-radius: .5rem; font-size: .9rem; }
+    .scaffold-box code { background: #f3f4f6; padding: .2rem .5rem; border-radius: .25rem; font-size: .85rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="breadcrumb"><a href="/admin/submissions">← Admin</a></div>
+    <h1>Plugins &amp; Themes</h1>
+
+    <form method="get" class="filters">
+      <input type="text" name="search" value={search} placeholder="Search packages…" />
+      <select name="type">
+        <option value="">All types</option>
+        {Object.entries(typeLabels).map(([val, label]) => (
+          <option value={val} selected={typeFilter === val}>{label}</option>
+        ))}
+      </select>
+      <button type="submit">Filter</button>
+      {(search || typeFilter) && (
+        <a href="/admin/plugins" style="font-size:.875rem;color:#6b7280;text-decoration:none;align-self:center;">Clear</a>
+      )}
+    </form>
+
+    <div class="count">{filtered.length} package{filtered.length !== 1 ? "s" : ""} found</div>
+
+    {filtered.length === 0 ? (
+      <div class="empty">No packages match your filters.</div>
+    ) : (
+      <div class="grid">
+        {filtered.map((pkg) => {
+          const m = pkg.manifest;
+          const r = pkg.registry;
+          const color = typeBadgeColor[m.type] || "#6b7280";
+          const typeLabel = typeLabels[m.type] || m.type;
+          const rating = r?.rating ?? 0;
+          const stars = "★".repeat(Math.round(rating)) + "☆".repeat(5 - Math.round(rating));
+          return (
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">{m.label}</div>
+                  <div class="card-version">v{m.version}</div>
+                </div>
+                <span class="badge" style={`background:${color}`}>{typeLabel}</span>
+              </div>
+              <p class="card-desc">{m.description}</p>
+              <div class="card-meta">
+                {r?.downloads != null && <span>⬇ {r.downloads}</span>}
+                {rating > 0 && <span class="stars" title={`${rating}/5`}>{stars}</span>}
+                {m.author && <span>by {m.author}</span>}
+              </div>
+              <div class="card-footer">
+                <button class="btn-install" onclick={`toggleInstall('${m.name}')`}>Install</button>
+                {m.homepage && (
+                  <a class="btn-docs" href={m.homepage} target="_blank" rel="noopener noreferrer">Docs ↗</a>
+                )}
+              </div>
+              <div class="install-info" id={`install-${m.name}`}>
+                <strong>Run in your project terminal:</strong>
+                <code>pnpm kapi install {m.name}</code>
+                {m.type === "child-theme" && (
+                  <div style="margin-top:.5rem;color:#4b5563;">After install, copy overrides to <code>src/theme/</code> per the package README.</div>
+                )}
+                {m.type === "plugin" && (
+                  <div style="margin-top:.5rem;color:#4b5563;">Then add to the plugins list in <code>kapilabs.config.ts</code>.</div>
+                )}
+                {m.type === "starter" && (
+                  <div style="margin-top:.5rem;color:#4b5563;">Starters apply to a fresh project only. Follow the starter README.</div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+
+    <div class="scaffold-box">
+      <strong>Create a new plugin</strong> — scaffold with:
+      <code>pnpm kapi generate plugin my-plugin-name</code>
+    </div>
+  </div>
+
+  <script>
+    function toggleInstall(name: string) {
+      const el = document.getElementById('install-' + name);
+      if (!el) return;
+      el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+    }
+    (window as any).toggleInstall = toggleInstall;
+  </script>
+</body>
+</html>

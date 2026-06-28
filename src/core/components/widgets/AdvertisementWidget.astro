@@ -1,0 +1,42 @@
+---
+const { title, imageUrl, linkUrl, altText, html } = Astro.props;
+---
+
+<div class="widget widget-advertisement">
+  {title && <h3>{title}</h3>}
+  {html ? (
+    <div set:html={html} />
+  ) : imageUrl ? (
+    <a href={linkUrl || "#"} target="_blank" rel="noopener noreferrer" class="ad-link">
+      <img src={imageUrl} alt={altText || "Advertisement"} loading="lazy" class="ad-image" />
+    </a>
+  ) : (
+    <div class="ad-placeholder">
+      <p>Advertisement</p>
+    </div>
+  )}
+</div>
+
+<style>
+  .ad-link {
+    display: block;
+  }
+
+  .ad-image {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm, 0.375rem);
+  }
+
+  .ad-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    background: var(--color-soft-background, #f9fafb);
+    border: 1px dashed var(--color-border, #e5e7eb);
+    border-radius: var(--radius-sm, 0.375rem);
+    color: var(--color-muted, #6b7280);
+    font-size: 0.85rem;
+  }
+</style>

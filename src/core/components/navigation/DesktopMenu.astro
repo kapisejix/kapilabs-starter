@@ -1,0 +1,48 @@
+---
+import MenuItem from "@kapi/components/navigation/MenuItem.astro";
+
+const { menu, currentPath = "/" } = Astro.props;
+const items = menu?.items || [];
+
+// Collect internal URLs for prefetch hints
+const prefetchUrls: string[] = [];
+function collectUrls(item: any) {
+  if (item.url && item.url.startsWith("/") && !item.url.startsWith("//")) {
+    prefetchUrls.push(item.url);
+  }
+  if (item.children) {
+    item.children.forEach(collectUrls);
+  }
+}
+items.forEach(collectUrls);
+---
+
+{items.length > 0 && (
+  <nav class="desktop-menu" aria-label={menu?.name || "Primary navigation"}>
+    <ul>
+      {items.map((item: any) => (
+        <MenuItem item={item} currentPath={currentPath} />
+      ))}
+    </ul>
+  </nav>
+)}
+
+{prefetchUrls.map((url) => (
+  <link rel="prefetch" href={url} />
+))}
+
+<style>
+  .desktop-menu ul {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  @media (max-width: 768px) {
+    .desktop-menu {
+      display: none;
+    }
+  }
+</style>

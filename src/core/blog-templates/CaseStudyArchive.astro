@@ -1,0 +1,98 @@
+---
+const {
+  cases = [],
+  title = "Case Studies",
+  description,
+} = Astro.props as {
+  cases: { title: string; excerpt?: string; slug: string; image?: string; category?: string }[];
+  title?: string;
+  description?: string;
+};
+---
+
+<section class="casestudy-archive">
+  <h1>{title}</h1>
+  {description && <p class="archive-description">{description}</p>}
+
+  <div class="casestudy-grid">
+    {cases.map((c) => (
+      <article class="casestudy-card">
+        {c.image && (
+          <img src={c.image} alt={c.title} class="casestudy-image" loading="lazy" />
+        )}
+        <div class="casestudy-body">
+          {c.category && <span class="casestudy-category">{c.category}</span>}
+          <h2 class="casestudy-title">
+            <a href={c.slug}>{c.title}</a>
+          </h2>
+          {c.excerpt && <p class="casestudy-excerpt">{c.excerpt}</p>}
+        </div>
+      </article>
+    ))}
+  </div>
+</section>
+
+<style>
+  .casestudy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 2rem;
+  }
+
+  .casestudy-card {
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-lg, 1rem);
+    overflow: hidden;
+    background: var(--color-background, #ffffff);
+    transition: box-shadow 0.2s;
+  }
+
+  .casestudy-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  .casestudy-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+
+  .casestudy-body {
+    padding: 1.5rem;
+  }
+
+  .casestudy-category {
+    display: inline-block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-secondary, #2563eb);
+    margin-bottom: 0.5rem;
+  }
+
+  .casestudy-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.2rem;
+  }
+
+  .casestudy-title a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .casestudy-title a:hover {
+    color: var(--color-primary, #111827);
+    text-decoration: underline;
+  }
+
+  .casestudy-excerpt {
+    color: var(--color-muted, #6b7280);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .archive-description {
+    color: var(--color-muted, #6b7280);
+    margin-bottom: 2rem;
+  }
+</style>

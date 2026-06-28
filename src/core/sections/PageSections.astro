@@ -1,0 +1,134 @@
+---
+import HeroSection from "@kapi/sections/HeroSection.astro";
+import ContentSection from "@kapi/sections/ContentSection.astro";
+import ServicesSection from "@kapi/sections/ServicesSection.astro";
+import CTASection from "@kapi/sections/CTASection.astro";
+import TestimonialsSection from "@kapi/sections/TestimonialsSection.astro";
+import HtmlSection from "@kapi/sections/HtmlSection.astro";
+import StatsSection from "@kapi/sections/StatsSection.astro";
+import FAQSection from "@kapi/sections/FAQSection.astro";
+import TeamSection from "@kapi/sections/TeamSection.astro";
+import BlogPreviewSection from "@kapi/sections/BlogPreviewSection.astro";
+import ContactSection from "@kapi/sections/ContactSection.astro";
+import FormSection from "@kapi/sections/FormSection.astro";
+
+import { sectionCssVars } from "@kapi/sections/sectionSettings";
+
+import type { NormalizedSection } from "@kapi/cms";
+
+const { sections = [] } = Astro.props as {
+  sections?: NormalizedSection[];
+};
+---
+
+<div class="page-sections">
+  {sections.map((section) => {
+    const settings = section.settings || {};
+    const cssVars = sectionCssVars(settings);
+    const sectionId = settings.sectionId || section.anchorId || "";
+    const cssClass = settings.cssClass || "";
+
+    return (
+      <section
+        id={sectionId || undefined}
+        class:list={[
+          "page-section",
+          `section-type-${section.type}`,
+          cssClass,
+          settings.animation && settings.animation !== "none" && "section-animated",
+          section.backgroundImage?.src && "has-bg-image",
+        ]}
+        style={cssVars || undefined}
+      >
+        {section.backgroundImage?.src && (
+          <img
+            class="section-bg-image"
+            src={section.backgroundImage.src}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            decoding="async"
+          />
+        )}
+        {settings.overlay && <div class="section-overlay" style={`background: ${settings.overlay}`} />}
+
+        <div class="section-inner">
+          {section.type === "hero" && <HeroSection section={section} />}
+          {section.type === "content" && <ContentSection section={section} />}
+          {section.type === "services" && <ServicesSection section={section} />}
+          {section.type === "cta" && <CTASection section={section} />}
+          {section.type === "testimonials" && <TestimonialsSection section={section} />}
+          {section.type === "html" && <HtmlSection section={section} />}
+          {section.type === "stats" && <StatsSection section={section} />}
+          {section.type === "faq" && <FAQSection section={section} />}
+          {section.type === "team" && <TeamSection section={section} />}
+          {section.type === "blog-preview" && <BlogPreviewSection section={section} />}
+          {section.type === "contact" && <ContactSection section={section} />}
+          {section.type === "form" && <FormSection section={section} />}
+        </div>
+      </section>
+    );
+  })}
+</div>
+
+<style is:global>
+  .page-sections {
+    display: grid;
+    gap: var(--section-gap-default, 56px);
+  }
+
+  .page-section {
+    position: relative;
+    padding: var(--section-padding, 3rem 0);
+    background: var(--section-bg, transparent);
+    max-width: var(--section-max-width, none);
+    margin-inline: auto;
+    width: 100%;
+  }
+
+  .page-section.has-bg-image {
+    overflow: hidden;
+  }
+
+  .section-bg-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .section-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .section-inner {
+    position: relative;
+    z-index: 2;
+  }
+
+  .section-type-hero.has-bg-image .section-inner {
+    display: grid;
+    align-content: center;
+    min-height: min(80vh, 600px);
+  }
+
+  .section-animated {
+    animation: var(--section-animate);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .section-animated {
+      animation: none !important;
+    }
+  }
+</style>
+
+
+
+

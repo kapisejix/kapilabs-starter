@@ -1,0 +1,16 @@
+---
+export const prerender = false;
+
+import SiteLayout from "@kapi/layouts/SiteLayout.astro";
+import BlogArchive from "@kapi/blog-templates/BlogArchive.astro";
+import { getPosts } from "@kapi/cms";
+
+const slug = Astro.params.slug || "";
+const posts = (await getPosts()).filter((post) =>
+  post.tags?.some((tag) => tag.toLowerCase() === slug.toLowerCase())
+);
+---
+
+<SiteLayout title={`Tag: ${slug}`} description={`Posts tagged ${slug}`}>
+  <BlogArchive posts={posts} title={`Tag: ${slug}`} />
+</SiteLayout>

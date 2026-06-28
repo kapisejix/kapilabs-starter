@@ -1,0 +1,12 @@
+# Sanity Studio build output
+.sanity/
+
+# Dependencies
+node_modules/
+
+# Env files
+.env
+.env.production
+
+# Build
+dist/

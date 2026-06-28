@@ -1,0 +1,52 @@
+---
+import DisplayPresetWrapper from "@kapi/sections/presets/DisplayPresetWrapper.astro";
+
+const { section } = Astro.props;
+const settings = section.settings || {};
+const items = Array.isArray(section.items) ? section.items : [];
+const showHeading = section.heading && !settings.hideTitle;
+---
+
+<section class="section faq-section">
+  {showHeading && <h2>{section.heading}</h2>}
+
+  <DisplayPresetWrapper items={items} preset={settings.displayPreset} settings={settings}>
+    {items.map((item: any, _i: number) => (
+      <details class="faq-item">
+        <summary>{item.question}</summary>
+        <div class="faq-answer">
+          <Fragment set:html={item.answer} />
+        </div>
+      </details>
+    ))}
+  </DisplayPresetWrapper>
+</section>
+
+<style>
+  .faq-section {
+    display: grid;
+    gap: var(--section-gap, 24px);
+  }
+
+  .faq-section h2 {
+    margin: 0;
+  }
+
+  .faq-item {
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--section-radius, 12px);
+    padding: 18px 20px;
+    background: var(--color-surface, #ffffff);
+  }
+
+  .faq-item summary {
+    cursor: pointer;
+    font-weight: 800;
+  }
+
+  .faq-answer {
+    color: var(--color-muted, #4b5563);
+  }
+</style>
+
+

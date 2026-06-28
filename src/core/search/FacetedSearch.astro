@@ -1,0 +1,260 @@
+---
+import type { CmsSearchFacets, CmsSearchFilter } from "@kapi/cms/types";
+
+export interface Props {
+  query: string;
+  facets: CmsSearchFacets;
+  activeFilters: CmsSearchFilter;
+  total: number;
+}
+
+const { query, facets, activeFilters, total } = Astro.props;
+
+const activeTypes: string[] = (activeFilters.types || []) as string[];
+const activeCategory = activeFilters.category || "";
+const activeTag = activeFilters.tag || "";
+const activeSort = activeFilters.sort || "relevance";
+const activeDateFrom = activeFilters.dateFrom || "";
+const activeDateTo = activeFilters.dateTo || "";
+
+function facetUrl(params: Record<string, string | undefined>): string {
+  const q = encodeURIComponent(query);
+  const args: string[] = [`q=${q}`];
+
+  const types = params.types ?? activeTypes.join(",");
+  if (types) args.push(`types=${encodeURIComponent(types)}`);
+
+  const cat = params.category ?? activeCategory;
+  if (cat) args.push(`category=${encodeURIComponent(cat)}`);
+
+  const tag = params.tag ?? activeTag;
+  if (tag) args.push(`tag=${encodeURIComponent(tag)}`);
+
+  const sort = params.sort ?? activeSort;
+  if (sort && sort !== "relevance") args.push(`sort=${encodeURIComponent(sort)}`);
+
+  const dateFrom = params.dateFrom ?? activeDateFrom;
+  if (dateFrom) args.push(`dateFrom=${encodeURIComponent(dateFrom)}`);
+
+  const dateTo = params.dateTo ?? activeDateTo;
+  if (dateTo) args.push(`dateTo=${encodeURIComponent(dateTo)}`);
+
+  return `/search?${args.join("&")}`;
+}
+
+function toggleType(type: string): string {
+  const current = new Set(activeTypes);
+  if (current.has(type)) current.delete(type);
+  else current.add(type);
+  return facetUrl({ types: Array.from(current).join(",") });
+}
+
+---
+
+<aside class="faceted-search-filters">
+  <div class="filter-section">
+    <h3>Content Type</h3>
+    <div class="filter-chips">
+      {facets.types.map((t) => (
+        <a
+          href={toggleType(t.name)}
+          class:list={["chip", activeTypes.includes(t.name) && "active"]}
+        >
+          {t.name} ({t.count})
+        </a>
+      ))}
+    </div>
+  </div>
+
+  {facets.categories.length > 0 && (
+    <div class="filter-section">
+      <h3>Categories</h3>
+      <div class="filter-chips">
+        {facets.categories.map((c) => (
+          <a
+            href={facetUrl({ category: c.name === activeCategory ? "" : c.name })}
+            class:list={["chip", activeCategory === c.name && "active"]}
+          >
+            {c.name} ({c.count})
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {facets.tags.length > 0 && (
+    <div class="filter-section">
+      <h3>Tags</h3>
+      <div class="filter-chips">
+        {facets.tags.map((t) => (
+          <a
+            href={facetUrl({ tag: t.name === activeTag ? "" : t.name })}
+            class:list={["chip", activeTag === t.name && "active"]}
+          >
+            {t.name} ({t.count})
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
+
+  {facets.dateRanges.length > 0 && (
+    <div class="filter-section">
+      <h3>Date</h3>
+      <div class="filter-chips">
+        {facets.dateRanges.map((d) => (
+          <a
+            href={facetUrl({ dateFrom: d.from, dateTo: d.to })}
+            class:list={["chip", activeDateFrom === d.from && activeDateTo === d.to && "active"]}
+          >
+            {d.label} ({d.count})
+          </a>
+        ))}
+      </div>
+
+      <div class="date-range-inputs">
+        <input
+          type="date"
+          value={activeDateFrom}
+          id="filter-date-from"
+          aria-label="From date"
+        />
+        <input
+          type="date"
+          value={activeDateTo}
+          id="filter-date-to"
+          aria-label="To date"
+        />
+      </div>
+    </div>
+  )}
+
+  <div class="filter-section">
+    <h3>Sort</h3>    <select
+          class="sort-select"
+          id="filter-sort"
+          aria-label="Sort order"
+        >
+      <option value="relevance" selected={activeSort === "relevance"}>Relevance</option>
+      <option value="date-desc" selected={activeSort === "date-desc"}>Newest First</option>
+      <option value="date-asc" selected={activeSort === "date-asc"}>Oldest First</option>
+      <option value="title-asc" selected={activeSort === "title-asc"}>Title A-Z</option>
+      <option value="title-desc" selected={activeSort === "title-desc"}>Title Z-A</option>
+    </select>
+  </div>
+
+  <p class="search-stats">{total} result(s)</p>
+
+  {(activeTypes.length > 0 || activeCategory || activeTag || activeSort !== "relevance" || activeDateFrom || activeDateTo) && (
+    <a href={`/search?q=${encodeURIComponent(query)}`} class="clear-filters">Clear all filters</a>
+  )}
+</aside>
+
+<script>
+  // Client-side filter handlers for date inputs and sort select
+  const facetUrl = new URL(window.location.href);
+
+  function applyFilter(key: string, value: string) {
+    if (value) {
+      facetUrl.searchParams.set(key, value);
+    } else {
+      facetUrl.searchParams.delete(key);
+    }
+    window.location.href = facetUrl.toString();
+  }
+
+  const dateFrom = document.getElementById("filter-date-from") as HTMLInputElement | null;
+  const dateTo = document.getElementById("filter-date-to") as HTMLInputElement | null;
+  const sortSelect = document.getElementById("filter-sort") as HTMLSelectElement | null;
+
+  dateFrom?.addEventListener("change", () => applyFilter("dateFrom", dateFrom.value));
+  dateTo?.addEventListener("change", () => applyFilter("dateTo", dateTo.value));
+  sortSelect?.addEventListener("change", () => applyFilter("sort", sortSelect.value));
+</script>
+
+<style>
+  .faceted-search-filters {
+    display: grid;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    background: var(--color-surface, #fff);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.5rem);
+    height: fit-content;
+  }
+
+  .filter-section h3 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted, #6b7280);
+    margin: 0 0 0.6rem;
+  }
+
+  .filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .chip {
+    padding: 0.3rem 0.65rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    color: var(--color-text, #111827);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .chip:hover {
+    border-color: var(--color-secondary, #2563eb);
+    background: var(--color-soft-background, #f0f4ff);
+  }
+
+  .chip.active {
+    background: var(--color-secondary, #2563eb);
+    color: white;
+    border-color: var(--color-secondary, #2563eb);
+  }
+
+  .date-range-inputs {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .date-range-inputs input {
+    flex: 1;
+    padding: 0.35rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-sm, 0.375rem);
+    font-size: 0.8rem;
+  }
+
+  .sort-select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-sm, 0.375rem);
+    font-size: 0.85rem;
+    background: var(--color-surface, #fff);
+  }
+
+  .search-stats {
+    font-size: 0.85rem;
+    color: var(--color-muted, #6b7280);
+    margin: 0;
+  }
+
+  .clear-filters {
+    font-size: 0.8rem;
+    color: var(--color-secondary, #2563eb);
+    text-decoration: none;
+  }
+
+  .clear-filters:hover {
+    text-decoration: underline;
+  }
+</style>

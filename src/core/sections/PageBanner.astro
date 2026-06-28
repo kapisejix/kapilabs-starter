@@ -1,0 +1,103 @@
+---
+import CmsImage from "@kapi/components/CmsImage.astro";
+
+const { banner } = Astro.props;
+
+const image = typeof banner?.image === "string" ? null : banner?.image;
+const hasBanner = Boolean(banner?.heading || banner?.text || image?.src);
+---
+
+{hasBanner && (
+  <section class={`page-banner align-${banner?.alignment || "center"} ${banner?.overlay ? "has-overlay" : ""}`}>
+    {image?.src && (
+      <CmsImage
+        image={image}
+        alt={image.alt || banner.heading || ""}
+        class="page-banner-image"
+        loading="eager"
+        fetchpriority="high"
+      />
+    )}
+
+    {banner?.overlay && <div class="page-banner-overlay"></div>}
+
+    <div class="page-banner-content">
+      {banner?.heading && <h1>{banner.heading}</h1>}
+      {banner?.text && <p>{banner.text}</p>}
+    </div>
+  </section>
+)}
+
+<style>
+  .page-banner {
+    position: relative;
+    display: grid;
+    min-height: 320px;
+    overflow: hidden;
+    border-radius: var(--radius-lg, 1rem);
+    background: var(--color-muted, #f5f5f5);
+  }
+
+  .page-banner :global(.page-banner-image) {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+  }
+
+  .page-banner :global(.page-banner-image img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .page-banner-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  .page-banner-content {
+    position: relative;
+    z-index: 3;
+    display: grid;
+    gap: 0.75rem;
+    align-content: center;
+    padding: clamp(2rem, 6vw, 5rem);
+    color: inherit;
+  }
+
+  .has-overlay .page-banner-content {
+    color: #fff;
+  }
+
+  .align-left .page-banner-content {
+    text-align: left;
+    justify-items: start;
+  }
+
+  .align-center .page-banner-content {
+    text-align: center;
+    justify-items: center;
+  }
+
+  .align-right .page-banner-content {
+    text-align: right;
+    justify-items: end;
+  }
+
+  .page-banner h1 {
+    margin: 0;
+    max-width: 760px;
+    font-size: clamp(2rem, 5vw, 4rem);
+    line-height: 1.05;
+  }
+
+  .page-banner p {
+    margin: 0;
+    max-width: 680px;
+    font-size: clamp(1rem, 2vw, 1.25rem);
+  }
+</style>

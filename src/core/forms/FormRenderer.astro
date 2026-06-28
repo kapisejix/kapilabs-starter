@@ -1,0 +1,182 @@
+---
+import FormField from "@kapi/forms/FormField.astro";
+import { generateCsrfToken } from "@kapi/forms/csrf";
+import { getTurnstileSiteKey } from "@kapi/forms/turnstile";
+
+const { form } = Astro.props;
+
+const fields = form?.fields || [];
+const formId = form?._id || form?.id || form?.title || "contact-form";
+
+// Generate CSRF token for this form render
+const { token: csrfToken, cookie: csrfCookie } = generateCsrfToken();
+const turnstileSiteKey = getTurnstileSiteKey();
+const hasTurnstile = !!turnstileSiteKey;
+---
+
+{csrfCookie && <meta name="kapi-csrf-cookie" content={csrfCookie} />}
+
+<form class="kapi-form" data-kapi-form data-form-id={formId}>
+  <input type="hidden" name="formId" value={formId} />
+  <input type="hidden" name="formTitle" value={form?.title || "Contact Form"} />
+  <input type="hidden" name="emailTo" value={form?.emailTo || ""} />
+  <input type="hidden" name="csrfToken" value={csrfToken} />
+
+  {fields.map((field: any) => (
+    <FormField field={field} />
+  ))}
+
+  {hasTurnstile && (
+    <div class="turnstile-wrapper" data-turnstile-wrapper>
+      <div
+        class="cf-turnstile"
+        data-sitekey={turnstileSiteKey}
+        data-callback="onTurnstileSuccess"
+      ></div>
+    </div>
+  )}
+
+  <button type="submit">Submit</button>
+
+  <p class="form-message" data-form-message></p>
+</form>
+
+<script>
+  // Load Turnstile script if site key is present
+  const turnstileWrapper = document.querySelector("[data-turnstile-wrapper]");
+  if (turnstileWrapper) {
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+  }
+
+  document.querySelectorAll<HTMLFormElement>("[data-kapi-form]").forEach((form) => {
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const message = form.querySelector<HTMLElement>("[data-form-message]");
+      const button = form.querySelector<HTMLButtonElement>("button[type='submit']");
+
+      if (!message || !button) return;
+
+      const formData = new FormData(form);
+
+      // Build values, filtering out internal fields
+      const values: Record<string, unknown> = {};
+      for (const [key, value] of formData.entries()) {
+        if (!["formId", "formTitle", "emailTo", "csrfToken"].includes(key)) {
+          values[key] = value;
+        }
+      }
+
+      // Get Turnstile token
+      const turnstileInput = form.querySelector<HTMLInputElement>("[name='cf-turnstile-response']");
+      const turnstileToken = turnstileInput?.value || "";
+
+      // Set CSRF cookie before submitting
+      const csrfMeta = document.querySelector<HTMLMetaElement>("meta[name='kapi-csrf-cookie']");
+      if (csrfMeta?.content) {
+        document.cookie = csrfMeta.content;
+      }
+
+      const payload = {
+        formId: formData.get("formId"),
+        formTitle: formData.get("formTitle"),
+        emailTo: formData.get("emailTo"),
+        csrfToken: formData.get("csrfToken"),
+        turnstileToken,
+        values,
+        pageUrl: window.location.href,
+      };
+
+      button.disabled = true;
+      message.textContent = "Sending...";
+
+      try {
+        const response = await fetch("/api/forms/submit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || "Form submission failed.");
+        }
+
+        form.reset();
+        message.textContent = result.message || "Thank you. Your message has been sent.";
+      } catch (error: unknown) {
+        message.textContent =
+          error instanceof Error ? error.message : "Something went wrong.";
+      } finally {
+        button.disabled = false;
+      }
+    });
+  });
+</script>
+
+<style>
+  .kapi-form {
+    display: grid;
+    gap: var(--space-md, 1rem);
+  }
+
+  .form-field {
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .form-field label {
+    font-weight: 700;
+  }
+
+  .form-field input,
+  .form-field textarea,
+  .form-field select {
+    width: 100%;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.5rem);
+    padding: 0.75rem 0.9rem;
+    font: inherit;
+  }
+
+  .form-field textarea {
+    min-height: 140px;
+  }
+
+  .checkbox-label {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+  }
+
+  .checkbox-label input {
+    width: auto;
+    margin-top: 0.25rem;
+  }
+
+  .kapi-form button {
+    justify-self: start;
+    border: 0;
+    border-radius: var(--button-radius, 0.5rem);
+    background: var(--color-secondary, #2563eb);
+    color: #fff;
+    padding: 0.8rem 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .kapi-form button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .form-message {
+    margin: 0;
+    color: var(--color-muted, #6b7280);
+  }
+</style>

@@ -1,0 +1,286 @@
+---
+import SiteLayout from "@kapi/layouts/SiteLayout.astro";
+import FacetedSearch from "@kapi/search/FacetedSearch.astro";
+import { searchAdvanced } from "@kapi/cms";
+
+const query = Astro.url.searchParams.get("q") || "";
+const typesParam = Astro.url.searchParams.get("types") || "";
+const categoryParam = Astro.url.searchParams.get("category") || "";
+const tagParam = Astro.url.searchParams.get("tag") || "";
+const sortParam = (Astro.url.searchParams.get("sort") || "relevance") as any;
+const dateFromParam = Astro.url.searchParams.get("dateFrom") || "";
+const dateToParam = Astro.url.searchParams.get("dateTo") || "";
+const pageParam = parseInt(Astro.url.searchParams.get("page") || "1", 10);
+
+const filterTypes: any[] | undefined = typesParam
+  ? typesParam.split(",").filter(Boolean)
+  : undefined;
+
+const searchFilter = {
+  types: filterTypes,
+  category: categoryParam || undefined,
+  tag: tagParam || undefined,
+  sort: sortParam || undefined,
+  dateFrom: dateFromParam || undefined,
+  dateTo: dateToParam || undefined,
+};
+
+const searchResponse = query
+  ? await searchAdvanced(query, searchFilter, { page: pageParam, pageSize: 20 })
+  : null;
+
+const results = searchResponse?.results || [];
+const facets = searchResponse?.facets || { types: [], categories: [], tags: [], dateRanges: [] };
+const total = searchResponse?.total || 0;
+const currentPage = searchResponse?.page || 1;
+const pageSize = searchResponse?.pageSize || 20;
+const totalPages = Math.ceil(total / pageSize);
+
+// Group results by type for display
+const grouped: Record<string, typeof results> = {};
+for (const result of results) {
+  const key = result.type;
+  if (!grouped[key]) grouped[key] = [];
+  grouped[key].push(result);
+}
+
+const typeLabels: Record<string, string> = {
+  page: "Pages",
+  post: "Blog Posts",
+  team: "Team Members",
+  testimonial: "Testimonials",
+  service: "Services",
+  faq: "FAQs",
+};
+
+const typeKeys = Object.keys(grouped);
+
+function pageUrl(page: number): string {
+  const params = new URLSearchParams();
+  if (query) params.set("q", query);
+  if (typesParam) params.set("types", typesParam);
+  if (categoryParam) params.set("category", categoryParam);
+  if (tagParam) params.set("tag", tagParam);
+  if (sortParam && sortParam !== "relevance") params.set("sort", sortParam);
+  if (dateFromParam) params.set("dateFrom", dateFromParam);
+  if (dateToParam) params.set("dateTo", dateToParam);
+  if (page > 1) params.set("page", String(page));
+  return `/search?${params.toString()}`;
+}
+
+Astro.response.headers.set("Cache-Control", "no-store, private");
+---
+
+<SiteLayout title={`Search: ${query || "All"}`} description={`Search results for ${query || "all content"}`}>
+  <main class="search-page site-container">
+    <h1>Search</h1>
+
+    <form method="get" action="/search" class="search-form">
+      <input type="search" name="q" value={query} placeholder="Search pages, posts, team..." aria-label="Search query" />
+      <button type="submit">Search</button>
+    </form>
+
+    {query && (
+      <div class="search-layout">
+        <FacetedSearch
+          query={query}
+          facets={facets}
+          activeFilters={searchFilter}
+          total={total}
+        />
+
+        <div class="search-results">
+          <p class="search-summary">{total} result(s) for "{query}"{currentPage > 1 ? ` (page ${currentPage})` : ""}</p>
+
+          {typeKeys.length > 0 ? (
+            typeKeys.map((type) => (
+              <section class="result-group">
+                <h2 class="result-group-title">{typeLabels[type] || type}</h2>
+                <ul class="result-list">
+                  {grouped[type].map((item) => (
+                    <li class="result-item">
+                      {item.url ? (
+                        <a href={item.url}>{item.title}</a>
+                      ) : (
+                        <span class="result-title-only">{item.title}</span>
+                      )}
+                      {item.excerpt && <p class="result-excerpt">{item.excerpt}</p>}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))
+          ) : (
+            <p class="no-results">No results found for "{query}". Try different keywords or filters.</p>
+          )}
+
+          {totalPages > 1 && (
+            <nav class="search-pagination" aria-label="Search results pages">
+              {currentPage > 1 && (
+                <a href={pageUrl(currentPage - 1)} class="page-link prev">← Previous</a>
+              )}
+              {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => {
+                const page = i + 1;
+                return (
+                  <a
+                    href={pageUrl(page)}
+                    class:list={["page-link", page === currentPage && "active"]}
+                    aria-current={page === currentPage ? "page" : undefined}
+                  >
+                    {page}
+                  </a>
+                );
+              })}
+              {currentPage < totalPages && (
+                <a href={pageUrl(currentPage + 1)} class="page-link next">Next →</a>
+              )}
+            </nav>
+          )}
+        </div>
+      </div>
+    )}
+
+    {!query && (
+      <p>Enter a search term to find content across pages, posts, team members, and more.</p>
+    )}
+  </main>
+</SiteLayout>
+
+<style>
+  .search-page {
+    padding: 2rem 0;
+  }
+
+  .search-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    max-width: 600px;
+  }
+
+  .search-form input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-md, 0.5rem);
+    font-size: 1rem;
+  }
+
+  .search-form input:focus {
+    border-color: var(--color-secondary, #2563eb);
+    outline: none;
+  }
+
+  .search-form button {
+    padding: 0.75rem 1.5rem;
+    background: var(--color-primary, #111827);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md, 0.5rem);
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
+  .search-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .search-results {
+    min-width: 0;
+  }
+
+  .search-summary {
+    color: var(--color-muted, #6b7280);
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .result-group {
+    margin-bottom: 2rem;
+  }
+
+  .result-group-title {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border, #e5e7eb);
+  }
+
+  .result-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .result-item a {
+    color: var(--color-primary, #111827);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .result-item a:hover {
+    color: var(--color-secondary, #2563eb);
+    text-decoration: underline;
+  }
+
+  .result-title-only {
+    font-weight: 600;
+  }
+
+  .result-excerpt {
+    color: var(--color-muted, #6b7280);
+    font-size: 0.9rem;
+    margin: 0.25rem 0 0;
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 2rem;
+    color: var(--color-muted, #6b7280);
+  }
+
+  .search-pagination {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2rem;
+  }
+
+  .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0.25rem 0.65rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-sm, 0.375rem);
+    color: var(--color-text, #111827);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: all 0.15s;
+  }
+
+  .page-link:hover {
+    border-color: var(--color-secondary, #2563eb);
+    background: var(--color-soft-background, #f0f4ff);
+  }
+
+  .page-link.active {
+    background: var(--color-secondary, #2563eb);
+    color: white;
+    border-color: var(--color-secondary, #2563eb);
+  }
+
+  @media (max-width: 768px) {
+    .search-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

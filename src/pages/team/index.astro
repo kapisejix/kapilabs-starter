@@ -1,0 +1,24 @@
+---
+import SiteLayout from "@kapi/layouts/SiteLayout.astro";
+import { getTeamMembers } from "@kapi/cms";
+
+const members = await getTeamMembers();
+
+Astro.response.headers.set("Cache-Control", "public, max-age=0, s-maxage=600, stale-while-revalidate=300");
+---
+
+<SiteLayout title="Team" description="Team members">
+  <main class="team-page">
+    <h1>Team</h1>
+
+    <div class="team-grid">
+      {members.map((member) => (
+        <article>
+          <h2>{member.name}</h2>
+          {member.role && <p>{member.role}</p>}
+          {member.bio && <p>{member.bio}</p>}
+        </article>
+      ))}
+    </div>
+  </main>
+</SiteLayout>

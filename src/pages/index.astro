@@ -1,0 +1,36 @@
+﻿---
+import SiteLayout from "@kapi/layouts/SiteLayout.astro";
+import { getPage } from "@kapi/cms";
+import { resolvePageTemplate } from "@kapi/page-templates/resolvePageTemplate";
+
+const page = await getPage("home");
+const PageTemplate = page ? resolvePageTemplate(page.template) : null;
+
+Astro.response.headers.set("Cache-Control", "public, max-age=0, s-maxage=600, stale-while-revalidate=300");
+---
+
+<SiteLayout
+  title={page?.seo?.title || page?.title || "KapiLabs"}
+  description={page?.seo?.description}
+  image={page?.seo?.image || page?.featuredImage}
+  layout={page?.layout}
+  customCode={page?.customCode}
+  canonical={page?.seo?.canonicalUrl}
+  noindex={page?.seo?.noindex}
+  nofollow={page?.seo?.nofollow}
+  twitterCard={page?.seo?.twitterCard}
+  ogTitle={page?.seo?.ogTitle}
+  ogDescription={page?.seo?.ogDescription}
+  visibility={page?.visibility ?? {}}
+  customBodyClass={page?.customBodyClass}
+  themePreset={page?.themePreset}
+>
+  {page && PageTemplate ? (
+    <PageTemplate page={page} />
+  ) : (
+    <main class="starter-page">
+      <h1>KapiLabs Astro Framework</h1>
+      <p>Frontend routes are installed. Connect a CMS or seed starter content to render the homepage.</p>
+    </main>
+  )}
+</SiteLayout>

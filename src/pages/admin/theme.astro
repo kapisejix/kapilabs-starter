@@ -1,0 +1,242 @@
+---
+export const prerender = false;
+
+import { isAdminAuthorized, generateAdminToken } from "@kapi/forms/admin-auth";
+import { rateLimit } from "@kapi/forms/rateLimiter";
+
+const FORM_ADMIN_KEY = process.env.FORM_ADMIN_KEY || import.meta.env.FORM_ADMIN_KEY;
+
+const headerKey = Astro.request.headers.get("x-admin-key");
+const cookieHeader = Astro.request.headers.get("cookie");
+const authorized = isAdminAuthorized(headerKey, cookieHeader);
+
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function renderLoginPage(error: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login — Theme</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background: #f3f4f6; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .box { max-width: 400px; width: 100%; margin: 2rem; padding: 2rem; background: #fff; border-radius: .5rem; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+    h1 { margin-top: 0; font-size: 1.5rem; }
+    label { display: block; margin-bottom: .5rem; font-weight: 600; }
+    input[type=password] { width: 100%; padding: .6rem; border: 1px solid #ccc; border-radius: .25rem; font-size: 1rem; box-sizing: border-box; }
+    button { width: 100%; padding: .7rem; background: #2563eb; color: #fff; border: 0; border-radius: .25rem; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
+    .err { color: #dc2626; font-size: .9rem; margin-bottom: 1rem; padding: .5rem; background: #fef2f2; border-radius: .25rem; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>Admin Login</h1>
+    ${error ? `<div class="err">${escapeHtml(error)}</div>` : ""}
+    <form method="post" action="/admin/theme">
+      <label for="key">Admin Key</label>
+      <input type="password" id="key" name="key" required autocomplete="off" />
+      <button type="submit">Sign In</button>
+    </form>
+  </div>
+</body>
+</html>`;
+}
+
+if (!authorized && Astro.request.method === "POST") {
+  const rl = rateLimit("admin-login", Astro.request, { maxRequests: 5, windowMs: 900_000 });
+  if (!rl.allowed) {
+    return new Response(
+      renderLoginPage("Too many login attempts. Please wait before trying again."),
+      { status: 429, headers: { "Content-Type": "text/html", "Retry-After": String(Math.ceil(rl.resetMs / 1000)) } }
+    );
+  }
+}
+
+let loginError = "";
+if (!authorized && Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+    const submittedKey = formData.get("key")?.toString() || "";
+    if (submittedKey === FORM_ADMIN_KEY) {
+      const { cookie } = generateAdminToken();
+      return new Response(null, {
+        status: 302,
+        headers: { "Location": "/admin/theme", "Set-Cookie": cookie },
+      });
+    } else {
+      loginError = "Invalid admin key.";
+    }
+  } catch {
+    loginError = "Invalid request.";
+  }
+}
+
+if (!authorized && Astro.request.method !== "POST") {
+  return new Response(renderLoginPage(loginError), { status: 401, headers: { "Content-Type": "text/html" } });
+}
+
+if (!authorized) {
+  return new Response(renderLoginPage(loginError), { status: 401, headers: { "Content-Type": "text/html" } });
+}
+
+Astro.response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theme Export / Import — Admin</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; background: #f9fafb; margin: 0; padding: 2rem; }
+    .container { max-width: 800px; margin: 0 auto; }
+    h1 { font-size: 1.75rem; margin-bottom: .25rem; }
+    .breadcrumb { font-size: .875rem; color: #6b7280; margin-bottom: 2rem; }
+    .breadcrumb a { color: #2563eb; text-decoration: none; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: .5rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .card h2 { margin-top: 0; font-size: 1.125rem; }
+    .card p { color: #4b5563; font-size: .9rem; margin-bottom: 1rem; }
+    button { padding: .6rem 1.25rem; border: 0; border-radius: .25rem; cursor: pointer; font-size: .9rem; }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-success { background: #16a34a; color: #fff; }
+    .btn-success:hover { background: #15803d; }
+    .btn-warn { background: #d97706; color: #fff; }
+    textarea { width: 100%; border: 1px solid #d1d5db; border-radius: .25rem; padding: .6rem; font-family: monospace; font-size: .85rem; resize: vertical; }
+    .result { display: none; margin-top: 1rem; padding: 1rem; border-radius: .25rem; font-size: .875rem; }
+    .result.ok { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
+    .result.err { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
+    pre { margin: 0; white-space: pre-wrap; word-break: break-word; font-size: .8rem; }
+    select { padding: .5rem; border: 1px solid #d1d5db; border-radius: .25rem; font-size: .9rem; }
+    .hint { font-size: .8rem; color: #9ca3af; margin-top: .5rem; }
+    .row { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+    label { font-weight: 600; display: block; margin-bottom: .4rem; }
+    .field { margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="breadcrumb"><a href="/admin/submissions">← Admin</a></div>
+    <h1>Theme Export / Import</h1>
+
+    <div class="card">
+      <h2>Export Theme</h2>
+      <p>Download current theme settings, site settings, menus, widgets, and design tokens as a JSON file.</p>
+      <button class="btn-success" id="btn-export">Download Theme Export</button>
+      <div class="hint">Saved as <code>theme-export-YYYY-MM-DD.json</code></div>
+    </div>
+
+    <div class="card">
+      <h2>Import Theme</h2>
+      <p>Upload a theme JSON file to validate and preview what will change. No data is written until you apply.</p>
+      <div class="field">
+        <label for="import-mode">Import Mode</label>
+        <select id="import-mode">
+          <option value="merge">Merge — keep existing settings not in the import file</option>
+          <option value="replace">Replace — overwrite all settings with import file</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="import-file">Upload JSON File</label>
+        <input type="file" id="import-file" accept=".json,application/json" style="font-size:.9rem;" />
+      </div>
+      <div class="field">
+        <label for="import-json">Or Paste JSON</label>
+        <textarea id="import-json" rows="6" placeholder='{ "version": "2.0", "themeSettings": { ... } }'></textarea>
+      </div>
+      <div class="row">
+        <button class="btn-primary" id="btn-preview">Preview &amp; Validate</button>
+        <button class="btn-warn" id="btn-apply" style="display:none;">Apply Import</button>
+      </div>
+      <div class="result" id="import-result"></div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('btn-export')?.addEventListener('click', async () => {
+      const btn = document.getElementById('btn-export') as HTMLButtonElement;
+      btn.disabled = true;
+      btn.textContent = 'Downloading...';
+      try {
+        const res = await fetch('/admin/theme-export.json');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const blob = await res.blob();
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const cd = res.headers.get('content-disposition') || '';
+        const m = cd.match(/filename="([^"]+)"/);
+        a.download = m ? m[1] : 'theme-export.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      } catch (e) {
+        alert('Export failed: ' + e);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Download Theme Export';
+      }
+    });
+
+    async function getJson(): Promise<string | null> {
+      const file = (document.getElementById('import-file') as HTMLInputElement)?.files?.[0];
+      if (file) return file.text();
+      return (document.getElementById('import-json') as HTMLTextAreaElement)?.value?.trim() || null;
+    }
+
+    document.getElementById('btn-preview')?.addEventListener('click', async () => {
+      const btn = document.getElementById('btn-preview') as HTMLButtonElement;
+      const resultEl = document.getElementById('import-result') as HTMLElement;
+      const applyBtn = document.getElementById('btn-apply') as HTMLButtonElement;
+
+      const raw = await getJson();
+      if (!raw) { alert('Upload a file or paste JSON first.'); return; }
+
+      let parsed: unknown;
+      try { parsed = JSON.parse(raw); } catch { alert('Invalid JSON.'); return; }
+
+      const mode = (document.getElementById('import-mode') as HTMLSelectElement).value;
+
+      btn.disabled = true;
+      btn.textContent = 'Validating...';
+      resultEl.style.display = 'none';
+      applyBtn.style.display = 'none';
+
+      try {
+        const res = await fetch('/admin/theme-import.json', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ theme: parsed, mode }),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          resultEl.className = 'result ok';
+          resultEl.innerHTML = `<strong>Validation passed.</strong> Mode: <code>${mode}</code><br><pre>${JSON.stringify(data.summary ?? data, null, 2)}</pre>`;
+          applyBtn.style.display = 'inline-block';
+        } else {
+          resultEl.className = 'result err';
+          resultEl.innerHTML = `<strong>Validation failed.</strong><br><pre>${JSON.stringify(data.errors ?? data, null, 2)}</pre>`;
+        }
+        resultEl.style.display = 'block';
+      } catch (e) {
+        resultEl.className = 'result err';
+        resultEl.textContent = 'Request failed: ' + e;
+        resultEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Preview & Validate';
+      }
+    });
+
+    document.getElementById('btn-apply')?.addEventListener('click', () => {
+      alert('Web apply not yet implemented. Run from terminal:\n\npnpm kapi import-theme <file>\n\nThis applies the validated theme import.');
+    });
+  </script>
+</body>
+</html>

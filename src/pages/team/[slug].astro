@@ -1,0 +1,59 @@
+---
+export const prerender = false;
+
+import SiteLayout from "@kapi/layouts/SiteLayout.astro";
+import { getTeamMember, getPostsByTeamMember } from "@kapi/cms";
+
+const slug = Astro.params.slug || "";
+const member = await getTeamMember(slug);
+
+if (!member) {
+  return Astro.redirect("/404");
+}
+
+const posts = await getPostsByTeamMember(slug);
+
+Astro.response.headers.set("Cache-Control", "public, max-age=0, s-maxage=600, stale-while-revalidate=300");
+
+const photo = typeof member.photo === "string" ? member.photo : member.photo?.src;
+---
+
+<SiteLayout
+  title={member.name}
+  description={member.role || member.bio || ""}
+  image={member.photo}
+>
+  <main class="team-member-page site-container">
+    <article class="team-member">
+      {photo && (
+        <img src={photo} alt={member.name} class="team-member-photo" />
+      )}
+
+      <h1>{member.name}</h1>
+      {member.role && <p class="team-member-role">{member.role}</p>}
+      {member.bio && <p class="team-member-bio">{member.bio}</p>}
+
+      <ul class="team-member-links">
+        {member.email && <li><a href={`mailto:${member.email}`}>Email</a></li>}
+        {member.website && <li><a href={member.website} rel="noopener noreferrer">Website</a></li>}
+        {member.linkedin && <li><a href={member.linkedin} rel="noopener noreferrer">LinkedIn</a></li>}
+        {member.twitter && <li><a href={member.twitter} rel="noopener noreferrer">Twitter</a></li>}
+        {member.github && <li><a href={member.github} rel="noopener noreferrer">GitHub</a></li>}
+      </ul>
+    </article>
+
+    {posts.length > 0 && (
+      <section class="team-member-posts">
+        <h2>Posts by {member.name}</h2>
+        <ul>
+          {posts.map((post) => (
+            <li>
+              <a href={`/blog/${post.slug}`}>{post.title}</a>
+              {post.excerpt && <p>{post.excerpt}</p>}
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </main>
+</SiteLayout>

@@ -1,0 +1,100 @@
+---
+import type { CmsTeamMember } from "@kapi/cms/types";
+
+const {
+  members = [],
+  title = "Team",
+  description,
+} = Astro.props as {
+  members: CmsTeamMember[];
+  title?: string;
+  description?: string;
+};
+---
+
+<section class="team-archive">
+  <h1>{title}</h1>
+  {description && <p class="archive-description">{description}</p>}
+
+  <div class="team-grid">
+    {members.map((member) => (
+      <article class="team-card">
+        {member.photo && (
+          <img
+            src={typeof member.photo === "string" ? member.photo : member.photo?.src || ""}
+            alt={member.name}
+            class="team-photo"
+            loading="lazy"
+            width={300}
+            height={300}
+          />
+        )}
+        <h2 class="team-name">
+          {member.slug ? (
+            <a href={`/team/${member.slug}`}>{member.name}</a>
+          ) : (
+            member.name
+          )}
+        </h2>
+        {member.role && <p class="team-role">{member.role}</p>}
+        {member.bio && <p class="team-bio">{member.bio}</p>}
+      </article>
+    ))}
+  </div>
+</section>
+
+<style>
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+
+  .team-card {
+    padding: 1.5rem;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-lg, 1rem);
+    background: var(--color-background, #ffffff);
+    text-align: center;
+  }
+
+  .team-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 1rem;
+  }
+
+  .team-name {
+    margin: 0 0 0.25rem;
+    font-size: 1.25rem;
+  }
+
+  .team-name a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .team-name a:hover {
+    color: var(--color-primary, #111827);
+    text-decoration: underline;
+  }
+
+  .team-role {
+    color: var(--color-muted, #6b7280);
+    font-size: 0.95rem;
+    margin: 0 0 0.75rem;
+  }
+
+  .team-bio {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .archive-description {
+    color: var(--color-muted, #6b7280);
+    margin-bottom: 2rem;
+  }
+</style>

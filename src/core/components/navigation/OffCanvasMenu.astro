@@ -1,0 +1,334 @@
+---
+import MenuItem from "@kapi/components/navigation/MenuItem.astro";
+
+const {
+  menu,
+  currentPath = "/",
+  direction = "left",
+  label = "Menu",
+  buttonClass = "",
+} = Astro.props as {
+  menu: any;
+  currentPath?: string;
+  direction?: "left" | "right";
+  label?: string;
+  buttonClass?: string;
+};
+
+const items = menu?.items || [];
+const menuId = `off-canvas-${(menu?.name || "nav").toLowerCase().replace(/\s+/g, "-")}-${Math.random().toString(36).slice(2, 7)}`;
+const drawerId = `${menuId}-drawer`;
+const triggerId = `${menuId}-trigger`;
+---
+
+{items.length > 0 && (
+  <div class="off-canvas-root" data-oc-id={menuId} data-direction={direction}>
+    <button
+      id={triggerId}
+      class:list={["off-canvas-trigger", buttonClass]}
+      aria-controls={drawerId}
+      aria-expanded="false"
+      aria-haspopup="dialog"
+      type="button"
+    >
+      <span class="oc-hamburger" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+      </span>
+      <span class="oc-label">{label}</span>
+    </button>
+
+    <div class="off-canvas-backdrop" data-oc-backdrop={menuId} aria-hidden="true"></div>
+
+    <div
+      id={drawerId}
+      class:list={["off-canvas-drawer", `oc-${direction}`]}
+      role="dialog"
+      aria-modal="true"
+      aria-label={menu?.name || "Navigation menu"}
+      aria-hidden="true"
+      tabindex="-1"
+    >
+      <div class="oc-header">
+        <span class="oc-title">{menu?.name || label}</span>
+        <button
+          class="oc-close"
+          data-oc-close={menuId}
+          type="button"
+          aria-label="Close menu"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M15 5L5 15M5 5l10 10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="oc-nav" aria-label={menu?.name || "Off-canvas navigation"}>
+        <ul>
+          {items.map((item: any) => (
+            <MenuItem item={item} currentPath={currentPath} />
+          ))}
+        </ul>
+      </nav>
+    </div>
+  </div>
+)}
+
+<script>
+  function initOffCanvas(root: HTMLElement) {
+    const id = root.dataset.ocId!;
+    const trigger = root.querySelector<HTMLButtonElement>(`#${CSS.escape(id)}-trigger`);
+    const drawer = root.querySelector<HTMLElement>(`#${CSS.escape(id)}-drawer`);
+    const backdrop = document.querySelector<HTMLElement>(`[data-oc-backdrop="${id}"]`);
+    const closeBtn = root.querySelector<HTMLButtonElement>(`[data-oc-close="${id}"]`);
+
+    if (!trigger || !drawer || !backdrop) return;
+
+    const FOCUSABLE = 'a[href],button:not([disabled]),input,select,textarea,[tabindex]:not([tabindex="-1"])';
+
+    function open() {
+      drawer!.removeAttribute("aria-hidden");
+      backdrop!.removeAttribute("aria-hidden");
+      trigger!.setAttribute("aria-expanded", "true");
+      root.classList.add("is-open");
+      document.body.style.overflow = "hidden";
+
+      setTimeout(() => {
+        const first = drawer!.querySelector<HTMLElement>(FOCUSABLE);
+        (first || drawer!).focus();
+      }, 50);
+    }
+
+    function close() {
+      drawer!.setAttribute("aria-hidden", "true");
+      backdrop!.setAttribute("aria-hidden", "true");
+      trigger!.setAttribute("aria-expanded", "false");
+      root.classList.remove("is-open");
+      document.body.style.overflow = "";
+      trigger!.focus();
+    }
+
+    drawer!.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        close();
+        return;
+      }
+      if (e.key !== "Tab") return;
+
+      const focusable = Array.from(drawer!.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+        (el) => !el.closest("[aria-hidden]") && el.offsetParent !== null
+      );
+      if (!focusable.length) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    });
+
+    trigger.addEventListener("click", () => {
+      root.classList.contains("is-open") ? close() : open();
+    });
+
+    closeBtn?.addEventListener("click", close);
+    backdrop.addEventListener("click", close);
+
+    document.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (e.key === "Escape" && root.classList.contains("is-open")) close();
+    });
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-oc-id]").forEach(initOffCanvas);
+</script>
+
+<style>
+  .off-canvas-root {
+    display: contents;
+  }
+
+  .off-canvas-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: inherit;
+    font: inherit;
+    border-radius: var(--radius-sm, 0.375rem);
+  }
+
+  .off-canvas-trigger:focus-visible {
+    outline: 2px solid var(--color-secondary, #2563eb);
+    outline-offset: 2px;
+  }
+
+  .oc-hamburger {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 22px;
+  }
+
+  .oc-hamburger span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: currentColor;
+    border-radius: 2px;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+
+  .off-canvas-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 49;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .off-canvas-root.is-open .off-canvas-backdrop {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .off-canvas-drawer {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: min(340px, 88vw);
+    background: var(--color-background, #fff);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.18);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .off-canvas-drawer.oc-left {
+    left: 0;
+    transform: translateX(-100%);
+  }
+
+  .off-canvas-drawer.oc-right {
+    right: 0;
+    transform: translateX(100%);
+  }
+
+  .off-canvas-root.is-open .off-canvas-drawer.oc-left {
+    transform: translateX(0);
+  }
+
+  .off-canvas-root.is-open .off-canvas-drawer.oc-right {
+    transform: translateX(0);
+  }
+
+  .oc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    flex-shrink: 0;
+  }
+
+  .oc-title {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  .oc-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: inherit;
+    border-radius: var(--radius-sm, 0.375rem);
+    transition: background 0.15s;
+  }
+
+  .oc-close:hover {
+    background: var(--color-soft-background, #f9fafb);
+  }
+
+  .oc-close:focus-visible {
+    outline: 2px solid var(--color-secondary, #2563eb);
+    outline-offset: 2px;
+  }
+
+  .oc-nav {
+    flex: 1;
+    padding: 1rem 1.25rem;
+    overflow-y: auto;
+  }
+
+  .oc-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .oc-nav :global(.menu-item > a) {
+    display: flex;
+    padding: 0.6rem 0.5rem;
+    border-radius: var(--radius-sm, 0.375rem);
+    color: var(--color-text, #111827);
+    text-decoration: none;
+    font-size: 1rem;
+    transition: background 0.15s;
+  }
+
+  .oc-nav :global(.menu-item > a:hover) {
+    background: var(--color-soft-background, #f9fafb);
+  }
+
+  .oc-nav :global(.menu-item.active > a) {
+    color: var(--color-secondary, #2563eb);
+    font-weight: 700;
+  }
+
+  .oc-nav :global(.submenu) {
+    position: static;
+    display: grid;
+    gap: 0.15rem;
+    box-shadow: none;
+    border: none;
+    padding: 0.25rem 0 0.25rem 1rem;
+    border-left: 2px solid var(--color-border, #e5e7eb);
+    margin: 0.25rem 0 0 0.75rem;
+  }
+
+  .oc-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .off-canvas-drawer,
+    .off-canvas-backdrop {
+      transition: none;
+    }
+  }
+</style>

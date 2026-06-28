@@ -1,0 +1,96 @@
+---
+import type { CmsMenuItem } from "@kapi/cms/types";
+
+const { items = [], columns = 3 } = Astro.props as {
+  items: CmsMenuItem[];
+  columns?: number;
+};
+
+// Group items into columns
+const columnSize = Math.ceil(items.length / columns);
+const columnItems: CmsMenuItem[][] = [];
+for (let i = 0; i < items.length; i += columnSize) {
+  columnItems.push(items.slice(i, i + columnSize));
+}
+---
+
+{items.length > 0 && (
+  <div class="mega-menu" style={`--mega-columns: ${columns};`} role="menu">
+    {columnItems.map((col) => (
+      <div class="mega-column">
+        {col.map((item) => (
+          <div class="mega-item">
+            <a href={item.url} role="menuitem" class="mega-link">
+              {item.icon && <span class="mega-icon" aria-hidden="true">{item.icon}</span>}
+              <span class="mega-text">
+                <span class="mega-label">{item.label}</span>
+                {item.description && <small class="mega-desc">{item.description}</small>}
+              </span>
+            </a>
+          </div>
+        ))}
+      </div>
+    ))}
+  </div>
+)}
+
+<style>
+  .mega-menu {
+    display: grid;
+    grid-template-columns: repeat(var(--mega-columns, 3), 1fr);
+    gap: 1rem;
+    padding: 1.25rem;
+    min-width: 500px;
+  }
+
+  .mega-column {
+    display: grid;
+    gap: 0.5rem;
+    align-content: start;
+  }
+
+  .mega-item {
+    list-style: none;
+  }
+
+  .mega-link {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm, 0.375rem);
+    color: var(--color-text, #111827);
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+
+  .mega-link:hover {
+    background: var(--color-soft-background, #f9fafb);
+  }
+
+  .mega-icon {
+    font-size: 1.25rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .mega-label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .mega-desc {
+    display: block;
+    color: var(--color-muted, #6b7280);
+    font-size: 0.8rem;
+    margin-top: 0.15rem;
+  }
+
+  @media (max-width: 768px) {
+    .mega-menu {
+      grid-template-columns: 1fr;
+      min-width: auto;
+    }
+  }
+</style>

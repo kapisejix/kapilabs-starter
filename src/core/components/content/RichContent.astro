@@ -1,0 +1,223 @@
+---
+import type { RichContent } from "@kapi/cms/types";
+import CmsImage from "@kapi/components/content/CmsImage.astro";
+import PageSections from "@kapi/sections/PageSections.astro";
+import { sanitizeContent } from "@kapi/utils/sanitizeHtml";
+
+interface Props {
+  blocks: RichContent;
+}
+
+const { blocks } = Astro.props;
+---
+
+<div class="rich-content">
+  {blocks.map((block) => {
+    if (block.type === "paragraph") {
+      return <p set:html={sanitizeContent(block.html)} />;
+    }
+    if (block.type === "heading") {
+      if (block.level === 1) return <h1 set:html={sanitizeContent(block.html)} />;
+      if (block.level === 2) return <h2 set:html={sanitizeContent(block.html)} />;
+      if (block.level === 3) return <h3 set:html={sanitizeContent(block.html)} />;
+      if (block.level === 4) return <h4 set:html={sanitizeContent(block.html)} />;
+      if (block.level === 5) return <h5 set:html={sanitizeContent(block.html)} />;
+      if (block.level === 6) return <h6 set:html={sanitizeContent(block.html)} />;
+    }
+    if (block.type === "blockquote") {
+      return <blockquote set:html={sanitizeContent(block.html)} />;
+    }
+    if (block.type === "list" && block.listType === "bullet") {
+      return (
+        <ul class:list={[block.level && block.level > 1 ? "nested-list" : ""]}>
+          {block.items.map((item) => <li set:html={sanitizeContent(item)} />)}
+        </ul>
+      );
+    }
+    if (block.type === "list" && block.listType === "number") {
+      return (
+        <ol>
+          {block.items.map((item) => <li set:html={sanitizeContent(item)} />)}
+        </ol>
+      );
+    }
+    if (block.type === "image") {
+      return (
+        <figure>
+          <CmsImage image={block.image} />
+          {block.caption && <figcaption>{block.caption}</figcaption>}
+        </figure>
+      );
+    }
+    if (block.type === "code") {
+      return (
+        <pre class={block.language ? `language-${block.language}` : ""}><code set:html={block.code} /></pre>
+      );
+    }
+    if (block.type === "shortcode") {
+      return <div set:html={sanitizeContent(block.html)} />;
+    }
+    if (block.type === "sectionRef") {
+      return <PageSections sections={block.sections} />;
+    }
+    if (block.type === "table") {
+      return (
+        <figure class="table-wrap">
+          <table>
+            {block.head && (
+              <thead>
+                <tr>{block.head.map((h) => <th>{h}</th>)}</tr>
+              </thead>
+            )}
+            <tbody>
+              {block.rows.map((row) => (
+                <tr>{row.map((cell) => <td set:html={sanitizeContent(cell)} />)}</tr>
+              ))}
+            </tbody>
+          </table>
+          {block.caption && <figcaption>{block.caption}</figcaption>}
+        </figure>
+      );
+    }
+    if (block.type === "video") {
+      return (
+        <div class="video-embed">
+          {block.provider === "youtube" ? (
+            <iframe
+              src={block.url.replace("watch?v=", "embed/")}
+              title={block.title || "Video"}
+              width={block.width || "100%"}
+              height={block.height || "360"}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            />
+          ) : block.provider === "vimeo" ? (
+            <iframe
+              src={block.url.replace("vimeo.com", "player.vimeo.com/video")}
+              title={block.title || "Video"}
+              width={block.width || "100%"}
+              height={block.height || "360"}
+              allow="autoplay; fullscreen; picture-in-picture"
+              allowfullscreen
+            />
+          ) : (
+            <video controls width={block.width || "100%"}>
+              <source src={block.url} />
+            </video>
+          )}
+          {block.title && <p class="video-caption">{block.title}</p>}
+        </div>
+      );
+    }
+    if (block.type === "columns") {
+      return (
+        <div class="content-columns" style={`--columns-gap: ${block.gap || "1.5rem"};`}>
+          {block.columns.map((col) => (
+            <div class="content-column" style={col.width ? `flex: ${col.width};` : "flex: 1;"}>
+              <div set:html={sanitizeContent(col.html)} />
+            </div>
+          ))}
+        </div>
+      );
+    }
+    if (block.type === "callout") {
+      return (
+        <div class={`callout callout-${block.variant || "info"}`}>
+          {block.title && <strong class="callout-title">{block.title}</strong>}
+          <div set:html={sanitizeContent(block.html)} />
+        </div>
+      );
+    }
+    if (block.type === "button") {
+      return (
+        <a
+          href={block.url}
+          class={`content-button content-button-${block.variant || "primary"}`}
+          target={block.targetBlank ? "_blank" : undefined}
+          rel={block.targetBlank ? "noopener noreferrer" : undefined}
+        >
+          {block.label}
+        </a>
+      );
+    }
+    return null;
+  })}
+</div>
+
+<style>
+  .rich-content {
+    display: grid;
+    gap: 1.2em;
+    font-size: 1.05rem;
+    line-height: 1.75;
+  }
+
+  .rich-content :global(p),
+  .rich-content :global(h1),
+  .rich-content :global(h2),
+  .rich-content :global(h3),
+  .rich-content :global(h4),
+  .rich-content :global(h5),
+  .rich-content :global(h6) {
+    margin: 0;
+  }
+
+  .rich-content :global(h1) { font-size: 2rem; line-height: 1.2; }
+  .rich-content :global(h2) { font-size: 1.6rem; line-height: 1.3; }
+  .rich-content :global(h3) { font-size: 1.35rem; line-height: 1.35; }
+  .rich-content :global(h4) { font-size: 1.15rem; }
+  .rich-content :global(h5) { font-size: 1rem; }
+  .rich-content :global(h6) { font-size: 0.9rem; }
+
+  .rich-content :global(blockquote) {
+    border-left: 4px solid var(--color-primary, #4f46e5);
+    margin: 0;
+    padding: 0.5em 1.25em;
+    color: var(--color-muted, #6b7280);
+    font-style: italic;
+  }
+
+  .rich-content :global(ul),
+  .rich-content :global(ol) {
+    margin: 0;
+    padding-left: 1.5em;
+  }
+
+  .rich-content :global(li + li) {
+    margin-top: 0.3em;
+  }
+
+  .rich-content :global(figure) {
+    margin: 0;
+  }
+
+  .rich-content :global(figure img) {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+  }
+
+  .rich-content :global(figcaption) {
+    font-size: 0.85rem;
+    color: var(--color-muted, #6b7280);
+    margin-top: 0.4em;
+    text-align: center;
+  }
+
+  .rich-content :global(a) {
+    color: var(--color-primary, #4f46e5);
+    text-decoration: underline;
+  }
+
+  .rich-content :global(a:hover) {
+    opacity: 0.8;
+  }
+
+  .rich-content :global(code) {
+    font-family: monospace;
+    background: var(--color-surface, #f3f4f6);
+    padding: 0.1em 0.35em;
+    border-radius: 3px;
+    font-size: 0.9em;
+  }
+</style>

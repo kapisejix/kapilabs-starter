@@ -1,0 +1,17 @@
+[
+  {
+    "_type": "sectionContact",
+    "type": "contact",
+    "heading": "Get In Touch",
+    "text": "We respond to all inquiries within 1 business day. Tell us about your project and we will get back to you with next steps.",
+    "phone": "+1 (555) 000-1234",
+    "email": "hello@apexdigital.example.com",
+    "address": "123 Digital Lane, Suite 400\nNew York, NY 10001"
+  },
+  {
+    "_type": "sectionForm",
+    "type": "form",
+    "heading": "Send Us a Message",
+    "form": { "_type": "reference", "_ref": "seed-form-contact" }
+  }
+]

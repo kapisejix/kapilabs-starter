@@ -1,0 +1,148 @@
+---
+import MenuItem from "@kapi/components/navigation/MenuItem.astro";
+
+const { menu, currentPath = "/", label = "Menu" } = Astro.props;
+const items = menu?.items || [];
+const menuId = `mobile-menu-${(menu?.name || "nav").toLowerCase().replace(/\s+/g, "-")}`;
+const summaryId = `${menuId}-toggle`;
+const contentId = `${menuId}-content`;
+---
+
+{items.length > 0 && (
+  <div class="mobile-menu-wrapper">
+    <details class="mobile-menu" id={menuId}>
+      <summary
+        id={summaryId}
+        aria-controls={contentId}
+        aria-expanded="false"
+      >
+        <span class="mm-hamburger" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+        <span class="mm-label">{label}</span>
+      </summary>
+
+      <nav
+        id={contentId}
+        aria-label={menu?.name || "Mobile navigation"}
+        role="navigation"
+      >
+        <ul>
+          {items.map((item: any) => (
+            <MenuItem item={item} currentPath={currentPath} />
+          ))}
+        </ul>
+      </nav>
+    </details>
+  </div>
+)}
+
+<script>
+  document.querySelectorAll<HTMLDetailsElement>(".mobile-menu").forEach((details) => {
+    const summary = details.querySelector<HTMLElement>("summary");
+    if (!summary) return;
+
+    // Sync aria-expanded with the native open attribute
+    details.addEventListener("toggle", () => {
+      summary.setAttribute("aria-expanded", String(details.open));
+    });
+
+    // ESC closes the menu and returns focus to summary
+    details.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (e.key === "Escape" && details.open) {
+        e.preventDefault();
+        details.open = false;
+        summary.setAttribute("aria-expanded", "false");
+        summary.focus();
+      }
+    });
+  });
+</script>
+
+<style>
+  .mobile-menu {
+    display: none;
+    position: relative;
+  }
+
+  .mobile-menu summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-weight: 800;
+    padding: 0.5rem;
+    list-style: none;
+    border-radius: var(--radius-sm, 0.375rem);
+  }
+
+  .mobile-menu summary::-webkit-details-marker { display: none; }
+
+  .mobile-menu summary:hover,
+  .mobile-menu summary:focus-visible {
+    outline: 2px solid var(--color-secondary, #2563eb);
+    outline-offset: 2px;
+  }
+
+  .mm-hamburger {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 22px;
+    flex-shrink: 0;
+  }
+
+  .mm-hamburger span {
+    display: block;
+    width: 100%;
+    height: 2px;
+    background: currentColor;
+    border-radius: 2px;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+
+  .mobile-menu[open] .mm-hamburger span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .mobile-menu[open] .mm-hamburger span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  .mobile-menu[open] .mm-hamburger span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  .mm-label {
+    font-size: 0.9rem;
+  }
+
+  .mobile-menu ul {
+    display: grid;
+    gap: 0.8rem;
+    padding: 1rem 0 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  .mobile-menu :global(.submenu) {
+    position: static;
+    display: grid;
+    box-shadow: none;
+    border: 0;
+    padding-left: 1rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mm-hamburger span {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .mobile-menu {
+      display: block;
+    }
+  }
+</style>

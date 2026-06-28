@@ -1,0 +1,104 @@
+---
+import { isActiveUrl } from "@kapi/components/navigation/isActiveUrl";
+import MegaMenu from "@kapi/components/navigation/MegaMenu.astro";
+
+const {
+  item,
+  currentPath = "/",
+  depth = 0,
+} = Astro.props;
+
+const hasChildren = item.children?.length > 0;
+const isActive = isActiveUrl(currentPath, item.url);
+const target = item.targetBlank ? "_blank" : undefined;
+const rel = [
+  item.targetBlank ? "noopener noreferrer" : "",
+  item.nofollow ? "nofollow" : "",
+].filter(Boolean).join(" ") || undefined;
+const animationStyle = item.animation ? `animation: ${item.animation};` : "";
+const isHidden = item.visibility === "hidden";
+---
+
+<li
+  class:list={["menu-item", `depth-${depth}`, item.cssClass, {
+    active: isActive,
+    "has-children": hasChildren,
+    "mega-menu": item.isMegaMenu,
+    "is-hidden": isHidden,
+  }]}
+  style={animationStyle}
+  role="none"
+>
+  <a href={item.url} target={target} rel={rel} aria-label={item.badge ? `${item.label} (${item.badge})` : undefined}>
+    {item.icon && <span class="menu-icon" aria-hidden="true">{item.icon}</span>}
+    <span>{item.label}</span>
+    {item.badge && <span class="menu-badge">{item.badge}</span>}
+  </a>
+
+  {item.description && <small>{item.description}</small>}
+
+  {hasChildren && (
+    <ul class:list={["submenu", { "submenu-mega": item.isMegaMenu }]}>
+      {item.isMegaMenu ? (
+        <MegaMenu items={item.children} columns={item.megaMenuColumns || 3} />
+      ) : (
+        item.children.map((child: any) => (
+          <Astro.self item={child} currentPath={currentPath} depth={depth + 1} />
+        ))
+      )}
+    </ul>
+  )}
+</li>
+
+<style>
+  .menu-item {
+    position: relative;
+    list-style: none;
+  }
+
+  .menu-item > a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .menu-item.active > a {
+    font-weight: 800;
+  }
+
+  .menu-item small {
+    display: block;
+    color: var(--color-muted, #6b7280);
+    font-size: 0.8rem;
+  }
+
+  .submenu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    min-width: 220px;
+    padding: 0.75rem;
+    margin: 0;
+    background: var(--color-background, #fff);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.5rem);
+    box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+    z-index: 20;
+  }
+
+  .menu-item:hover > .submenu,
+  .menu-item:focus-within > .submenu {
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  .submenu .submenu {
+    left: 100%;
+    top: 0;
+  }
+</style>
+
+

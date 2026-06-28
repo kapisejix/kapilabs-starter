@@ -1,0 +1,85 @@
+---
+const { section } = Astro.props;
+const settings = section.settings || {};
+const align = settings.alignment || "center";
+const btnStyle = settings.buttonStyle || "solid";
+---
+
+<section class:list={["section hero-section", `hero-align-${align}`, `btn-style-${btnStyle}`]}>
+  {section.eyebrow && <p class="eyebrow">{section.eyebrow}</p>}
+  <h2>{section.heading}</h2>
+  {section.text && <Fragment set:html={section.text} />}
+
+  {section.buttonLabel && section.buttonUrl && (
+    <a class="button" href={section.buttonUrl}>{section.buttonLabel}</a>
+  )}
+</section>
+
+<style>
+  .hero-section {
+    display: grid;
+    gap: 20px;
+    padding: 64px 0;
+  }
+
+  .hero-align-left {
+    text-align: left;
+    justify-items: start;
+  }
+
+  .hero-align-center {
+    text-align: center;
+    justify-items: center;
+  }
+
+  .hero-align-right {
+    text-align: right;
+    justify-items: end;
+  }
+
+  .eyebrow {
+    color: var(--color-muted, #6b7280);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0;
+  }
+
+  .hero-section h2 {
+    font-size: clamp(40px, 7vw, 72px);
+    line-height: 1;
+    margin: 0;
+    max-width: 900px;
+  }
+
+  .button {
+    display: inline-flex;
+    width: fit-content;
+    border-radius: var(--button-radius, 999px);
+    padding: 12px 24px;
+    font-weight: 800;
+    background: var(--color-button, #111827);
+    color: #fff;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .button:hover {
+    opacity: 0.85;
+  }
+
+  .btn-style-outline .button {
+    background: transparent;
+    border: 2px solid var(--color-button, #111827);
+    color: var(--color-button, #111827);
+  }
+
+  .btn-style-ghost .button {
+    background: transparent;
+    border: none;
+    color: var(--color-link, #2563eb);
+    padding: 12px 0;
+  }
+</style>
+
+

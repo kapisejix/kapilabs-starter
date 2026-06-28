@@ -1,0 +1,318 @@
+---
+import SiteLayout from "@kapi/layouts/SiteLayout.astro";
+import { getKnowledgeBaseTree, getKnowledgeBaseArticles } from "@kapi/cms";
+
+const tree = await getKnowledgeBaseTree();
+const { articles: recentArticles } = await getKnowledgeBaseArticles({
+  pageSize: 5,
+});
+const { articles: featuredArticles } = await getKnowledgeBaseArticles({
+  featured: true,
+  pageSize: 3,
+});
+---
+
+<SiteLayout
+  title="Knowledge Base"
+  description="Browse our knowledge base for guides, tutorials, and documentation"
+>
+  <main class="kb-page site-container">
+    <header class="kb-header">
+      <h1>Knowledge Base</h1>
+      <p class="kb-subtitle">Browse guides, tutorials, and documentation</p>
+
+      <form method="get" action="/knowledge-base/search" class="kb-search">
+        <input
+          type="search"
+          name="q"
+          placeholder="Search knowledge base articles..."
+          aria-label="Search knowledge base"
+        />
+        <button type="submit">Search</button>
+      </form>
+    </header>
+
+    {featuredArticles.length > 0 && (
+      <section class="kb-featured">
+        <h2>Featured Articles</h2>
+        <div class="featured-grid">
+          {featuredArticles.map((article) => (
+            <a
+              href={`/knowledge-base/${article.slug}`}
+              class="featured-card"
+            >
+              <h3>{article.title}</h3>
+              {article.excerpt && <p>{article.excerpt}</p>}
+              <span class="read-more">Read more →</span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <section class="kb-browse">
+      <h2>Browse by Category</h2>
+
+      {tree.categories.length > 0 ? (
+        <div class="category-grid">
+          {tree.categories.map((cat) => (
+            <div class="category-card">
+              <a
+                href={`/knowledge-base/category/${cat.slug}`}
+                class="category-link"
+              >
+                <span class="category-icon">{cat.icon || "📖"}</span>
+                <h3>{cat.title}</h3>
+                {cat.description && <p>{cat.description}</p>}
+                <span class="article-count">
+                  {cat.articleCount || 0} article(s)
+                </span>
+              </a>
+
+              {cat.children && cat.children.length > 0 && (
+                <ul class="sub-categories">
+                  {cat.children.map((child) => (
+                    <li>
+                      <a href={`/knowledge-base/category/${child.slug}`}>
+                        {child.title} ({child.articleCount || 0})
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p class="empty-state">No categories yet. Check back soon.</p>
+      )}
+    </section>
+
+    <section class="kb-recent">
+      <h2>Recent Articles</h2>
+      <ul class="recent-list">
+        {recentArticles.map((article) => (
+          <li>
+            <a href={`/knowledge-base/${article.slug}`}>
+              {article.title}
+            </a>
+            {article.excerpt && <p>{article.excerpt}</p>}
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    {tree.uncategorizedCount > 0 && (
+      <section class="kb-uncategorized">
+        <h2>Uncategorized</h2>
+        <a href="/knowledge-base?uncategorized=1" class="uncat-link">
+          Browse {tree.uncategorizedCount} uncategorized article(s)
+        </a>
+      </section>
+    )}
+  </main>
+</SiteLayout>
+
+<style>
+  .kb-page {
+    padding: 2rem 0;
+  }
+
+  .kb-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+
+  .kb-header h1 {
+    margin: 0 0 0.5rem;
+    font-size: 2rem;
+  }
+
+  .kb-subtitle {
+    color: var(--color-muted, #6b7280);
+    margin: 0 0 1.5rem;
+  }
+
+  .kb-search {
+    display: flex;
+    gap: 0.5rem;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .kb-search input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.5rem);
+    font-size: 1rem;
+  }
+
+  .kb-search button {
+    padding: 0.75rem 1.5rem;
+    background: var(--color-primary, #111827);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md, 0.5rem);
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .kb-featured,
+  .kb-browse,
+  .kb-recent {
+    margin-bottom: 2.5rem;
+  }
+
+  .kb-featured h2,
+  .kb-browse h2,
+  .kb-recent h2 {
+    font-size: 1.25rem;
+    margin: 0 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--color-border, #e5e7eb);
+  }
+
+  .featured-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .featured-card {
+    display: block;
+    padding: 1.25rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.5rem);
+    background: var(--color-surface, #fff);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+  }
+
+  .featured-card:hover {
+    border-color: var(--color-secondary, #2563eb);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+
+  .featured-card h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+  }
+
+  .featured-card p {
+    color: var(--color-muted, #6b7280);
+    font-size: 0.9rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .read-more {
+    color: var(--color-secondary, #2563eb);
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+
+  .category-card {
+    padding: 1.25rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.5rem);
+    background: var(--color-surface, #fff);
+  }
+
+  .category-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+
+  .category-icon {
+    font-size: 1.5rem;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .category-link h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1.1rem;
+  }
+
+  .category-link p {
+    color: var(--color-muted, #6b7280);
+    font-size: 0.85rem;
+    margin: 0 0 0.5rem;
+  }
+
+  .article-count {
+    font-size: 0.8rem;
+    color: var(--color-secondary, #2563eb);
+    font-weight: 600;
+  }
+
+  .sub-categories {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 0;
+    border-top: 1px solid var(--color-border, #e5e7eb);
+    padding-top: 0.75rem;
+  }
+
+  .sub-categories li {
+    margin-bottom: 0.35rem;
+  }
+
+  .sub-categories a {
+    color: var(--color-text, #111827);
+    text-decoration: none;
+    font-size: 0.9rem;
+  }
+
+  .sub-categories a:hover {
+    color: var(--color-secondary, #2563eb);
+  }
+
+  .recent-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .recent-list a {
+    color: var(--color-primary, #111827);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .recent-list a:hover {
+    color: var(--color-secondary, #2563eb);
+  }
+
+  .recent-list p {
+    color: var(--color-muted, #6b7280);
+    font-size: 0.9rem;
+    margin: 0.2rem 0 0;
+  }
+
+  .empty-state {
+    color: var(--color-muted, #6b7280);
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .kb-uncategorized {
+    margin-bottom: 2rem;
+  }
+
+  .uncat-link {
+    color: var(--color-secondary, #2563eb);
+    text-decoration: none;
+    font-weight: 600;
+  }
+</style>

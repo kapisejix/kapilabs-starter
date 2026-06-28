@@ -1,0 +1,82 @@
+---
+import DisplayPresetWrapper from "@kapi/sections/presets/DisplayPresetWrapper.astro";
+
+const { section } = Astro.props;
+const settings = section.settings || {};
+const items = Array.isArray(section.items) ? section.items : [];
+const showHeading = section.heading && !settings.hideTitle;
+const cardStyleClass = settings.cardStyle ? `card-style-${settings.cardStyle}` : "";
+---
+
+<section class:list={["section services-section", cardStyleClass]}>
+  {showHeading && <h2>{section.heading}</h2>}
+
+  <DisplayPresetWrapper items={items} preset={settings.displayPreset} settings={settings}>
+    {items.map((item: any, _i: number) => (
+      <article class="service-card">
+        <h3>{item.title}</h3>
+        {item.text && <Fragment set:html={item.text} />}
+        {item.url && <a href={item.url}>Learn more</a>}
+      </article>
+    ))}
+  </DisplayPresetWrapper>
+</section>
+
+<style>
+  .services-section {
+    display: grid;
+    gap: var(--section-gap, 24px);
+  }
+
+  .services-section h2 {
+    margin: 0;
+  }
+
+  .service-card {
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--section-radius, 12px);
+    padding: 24px;
+    background: var(--color-surface, #ffffff);
+    height: 100%;
+    display: grid;
+    align-content: start;
+    gap: 0.5rem;
+  }
+
+  .card-style-elevated .service-card {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    border-color: transparent;
+  }
+
+  .card-style-flat .service-card {
+    border: none;
+    background: transparent;
+    padding: 16px 0;
+  }
+
+  .card-style-gradient .service-card {
+    border: none;
+    background: linear-gradient(135deg, var(--color-soft-background, #f9fafb), var(--color-surface, #ffffff));
+  }
+
+  .service-card h3 {
+    margin: 0;
+  }
+
+  .service-card p {
+    color: var(--color-muted, #4b5563);
+    margin: 0;
+  }
+
+  .service-card a {
+    font-weight: 800;
+  }
+
+  @media (max-width: 900px) {
+    .services-section {
+      gap: 1rem;
+    }
+  }
+</style>
+
+

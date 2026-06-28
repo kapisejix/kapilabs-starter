@@ -1,0 +1,61 @@
+---
+import { renderShortcodesAsync } from "@kapi/shortcodes/renderShortcodes";
+const { section } = Astro.props;
+
+const settings = section.settings || {};
+const heading = section.heading || "";
+const rawBody = section.body || section.content || "";
+const body = await renderShortcodesAsync(rawBody);
+const width = settings.containerWidth || section.containerWidth || "content";
+const align = settings.alignment || section.alignment || "left";
+const showHeading = heading && !settings.hideTitle;
+---
+
+<section class:list={["content-section", `width-${width}`, `align-${align}`]}>
+  {showHeading && <h2>{heading}</h2>}
+
+  {body && (
+    <div class="content-body" set:html={body} />
+  )}
+</section>
+
+<style>
+  .content-section {
+    padding: var(--section-padding, 3rem 1rem);
+    margin: 0 auto;
+    max-width: var(--section-max-width, none);
+  }
+
+  .content-section h2 {
+    margin: 0 0 1rem;
+  }
+
+  .width-content {
+    max-width: var(--content-width, 760px);
+  }
+
+  .width-container {
+    max-width: var(--container-width, 1200px);
+  }
+
+  .width-full {
+    max-width: none;
+  }
+
+  .align-left {
+    text-align: left;
+  }
+
+  .align-center {
+    text-align: center;
+  }
+
+  .align-right {
+    text-align: right;
+  }
+
+  .content-body :global(p) {
+    line-height: 1.7;
+  }
+</style>
+

@@ -1,0 +1,38 @@
+---
+import type { RichContent } from "@kapi/cms/types";
+import RichContentComponent from "@kapi/components/content/RichContent.astro";
+import { sanitizeContent } from "@kapi/utils/sanitizeHtml";
+
+interface Props {
+  content?: string | RichContent | { body?: string };
+}
+
+const { content } = Astro.props;
+
+const isRichContent = Array.isArray(content);
+const rawBody = !isRichContent
+  ? (typeof content === "string" ? content : (content as any)?.body || "")
+  : "";
+const htmlBody = sanitizeContent(rawBody);
+---
+
+{isRichContent ? (
+  <RichContentComponent blocks={content as RichContent} />
+) : htmlBody ? (
+  <div class="content-body" set:html={htmlBody} />
+) : (
+  <p class="muted">No content added yet.</p>
+)}
+
+<style>
+  .content-body {
+    display: grid;
+    gap: 16px;
+    font-size: 18px;
+    line-height: 1.7;
+  }
+
+  .content-body :global(p) {
+    margin: 0;
+  }
+</style>

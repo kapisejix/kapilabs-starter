@@ -1,0 +1,24 @@
+---
+const { author } = Astro.props;
+
+if (!author) return null;
+---
+
+<section class="author-box card">
+  <h3>{author.name}</h3>
+
+  {author.role && <p>{author.role}</p>}
+
+  {author.bio && <p>{author.bio}</p>}
+
+  <a href={`/team/${author.slug}`}>
+    View Profile
+  </a>
+</section>
+
+<style>
+.author-box{
+  display:grid;
+  gap:12px;
+}
+</style>

@@ -1,0 +1,213 @@
+---
+export const prerender = false;
+
+import BaseLayout from "@kapi/layouts/BaseLayout.astro";
+import { formStorage } from "@kapi/forms/storage";
+import { isAdminAuthorized, generateAdminToken } from "@kapi/forms/admin-auth";
+import { rateLimit } from "@kapi/forms/rateLimiter";
+import type { FormSubmission } from "@kapi/forms/storage/types";
+
+const FORM_ADMIN_KEY = process.env.FORM_ADMIN_KEY || import.meta.env.FORM_ADMIN_KEY;
+
+// ── Auth check: x-admin-key header first, then session cookie ──
+const headerKey = Astro.request.headers.get("x-admin-key");
+const cookieHeader = Astro.request.headers.get("cookie");
+
+const authorized = isAdminAuthorized(headerKey, cookieHeader);
+
+/**
+ * Render a standalone login page HTML string.
+ * This avoids needing a full layout component for the unauthenticated state.
+ */
+function renderLoginPage(error: string, search: string, form: string): string {
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  if (form) params.set("form", form);
+  const queryString = params.toString();
+  const action = `/admin/submissions${queryString ? "?" + queryString : ""}`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login — Form Submissions</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f3f4f6; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-container { max-width: 400px; width: 100%; margin: 2rem; padding: 2rem; background: #fff; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .login-container h1 { margin-top: 0; font-size: 1.5rem; }
+    .login-container label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+    .login-container input[type="password"] { width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 0.25rem; font-size: 1rem; box-sizing: border-box; }
+    .login-container button { width: 100%; padding: 0.7rem; background: #2563eb; color: #fff; border: 0; border-radius: 0.25rem; font-size: 1rem; cursor: pointer; margin-top: 1rem; }
+    .login-container button:hover { background: #1d4ed8; }
+    .login-error { color: #dc2626; font-size: 0.9rem; margin-bottom: 1rem; padding: 0.5rem; background: #fef2f2; border-radius: 0.25rem; }
+    .login-hint { font-size: 0.8rem; color: #6b7280; margin-top: 1rem; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <h1>Admin Login</h1>
+    <p style="color:#6b7280;margin-bottom:1.5rem;">Enter the admin key to view form submissions.</p>
+    ${error ? `<div class="login-error">${escapeHtml(error)}</div>` : ""}
+    <form method="post" action="${escapeHtml(action)}">
+      <label for="key">Admin Key</label>
+      <input type="password" id="key" name="key" required autocomplete="off" />
+      <button type="submit">Sign In</button>
+    </form>
+    <div class="login-hint">Session expires after 15 minutes of inactivity.</div>
+  </div>
+</body>
+</html>`;
+}
+
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// Rate limit admin login attempts
+if (!authorized && Astro.request.method === "POST") {
+  const rl = rateLimit("admin-login", Astro.request, { maxRequests: 5, windowMs: 900_000 });
+  if (!rl.allowed) {
+    return new Response(
+      renderLoginPage("Too many login attempts. Please wait before trying again.", "", ""),
+      { status: 429, headers: { "Content-Type": "text/html", "Retry-After": String(Math.ceil(rl.resetMs / 1000)) } }
+    );
+  }
+}
+
+// Handle POST login
+let loginError = "";
+if (!authorized && Astro.request.method === "POST") {
+  try {
+    const formData = await Astro.request.formData();
+    const submittedKey = formData.get("key")?.toString() || "";
+    if (submittedKey === FORM_ADMIN_KEY) {
+      const { cookie } = generateAdminToken();
+      return new Response(null, {
+        status: 302,
+        headers: {
+          "Location": "/admin/submissions",
+          "Set-Cookie": cookie,
+        },
+      });
+    } else {
+      loginError = "Invalid admin key.";
+    }
+  } catch {
+    loginError = "Invalid request.";
+  }
+}// Check if we should show the login form
+if (!authorized && Astro.request.method !== "POST") {
+  // For the initial load without auth, check if a token cookie exists but is invalid
+  return new Response(
+    renderLoginPage(loginError, Astro.url.searchParams.get("search") || "", Astro.url.searchParams.get("form") || ""),
+    {
+      status: 401,
+      headers: {
+        "Content-Type": "text/html",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+      },
+    }
+  );
+}
+
+// ── Authorized: render submissions list ──
+const search = Astro.url.searchParams.get("search") || undefined;
+const formFilter = Astro.url.searchParams.get("form") || undefined;
+
+const submissions: FormSubmission[] = await formStorage.listSubmissions({ search: search, form: formFilter });
+
+Astro.response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+---
+
+<BaseLayout title="Form Submissions — Admin" noindex={true}>
+
+  <main class="site-container" style="padding: 2rem 0;">
+    <h1>Form Submissions</h1>
+
+    <form method="get" style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap;">
+      <input type="text" name="search" value={search || ""} placeholder="Search…" style="border:1px solid #ccc;padding:.5rem;border-radius:.25rem;" />
+      <input type="text" name="form" value={formFilter || ""} placeholder="Filter by form title…" style="border:1px solid #ccc;padding:.5rem;border-radius:.25rem;" />
+      <button type="submit" style="padding:.5rem 1rem;background:#2563eb;color:#fff;border:0;border-radius:.25rem;cursor:pointer;">Filter</button>
+      <button id="export-csv" style="padding:.5rem 1rem;background:#16a34a;color:#fff;border-radius:.25rem;border:0;cursor:pointer;">Export CSV</button>
+    </form>
+
+    <p>{submissions.length} submission{submissions.length !== 1 ? "s" : ""}</p>
+
+    {submissions.length === 0 ? (
+      <p>No submissions found.</p>
+    ) : (
+      <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;font-size:.9rem;">
+          <thead>
+            <tr style="background:#f3f4f6;">
+              <th style="padding:.6rem;text-align:left;border:1px solid #e5e7eb;">Form</th>
+              <th style="padding:.6rem;text-align:left;border:1px solid #e5e7eb;">Submitted</th>
+              <th style="padding:.6rem;text-align:left;border:1px solid #e5e7eb;">Page</th>
+              <th style="padding:.6rem;text-align:left;border:1px solid #e5e7eb;">Data</th>
+            </tr>
+          </thead>
+          <tbody>
+            {submissions.map((s) => (
+              <tr>
+                <td style="padding:.6rem;border:1px solid #e5e7eb;">{s.formTitle}</td>
+                <td style="padding:.6rem;border:1px solid #e5e7eb;">{s.createdAt ? new Date(s.createdAt).toLocaleString() : "—"}</td>
+                <td style="padding:.6rem;border:1px solid #e5e7eb;">{s.pageUrl || "—"}</td>
+                <td style="padding:.6rem;border:1px solid #e5e7eb;">
+                  <pre style="margin:0;font-size:.8rem;white-space:pre-wrap;">{JSON.stringify(
+                    Object.fromEntries(
+                      Object.entries(s.values || {}).filter(([k]) => !["formId","formTitle","emailTo"].includes(k))
+                    ),
+                    null, 2
+                  )}</pre>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </main>
+</BaseLayout>
+
+<script>
+  // Export CSV via JS fetch — session cookie is sent automatically by the browser
+  document.getElementById("export-csv")?.addEventListener("click", async () => {
+    const button = document.getElementById("export-csv") as HTMLButtonElement;
+    if (!button) return;
+
+    const params = new URLSearchParams(window.location.search);
+    params.delete("key");
+
+    const url = `/api/forms/export${params.toString() ? "?" + params.toString() : ""}`;
+
+    button.disabled = true;
+    button.textContent = "Downloading...";
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error("Export failed");
+      }
+      const blob = await response.blob();
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "form-submissions.csv";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } catch {
+      alert("Export failed. Please check your session and try again.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "Export CSV";
+    }
+  });
+</script>
+
+<style>
+  .kapi-form {
+    display: grid;
+    gap: var(--space-md, 1rem);
+  }
+</style>

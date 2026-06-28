@@ -1,0 +1,85 @@
+---
+const {
+  testimonials = [],
+  title = "Testimonials",
+  description,
+} = Astro.props as {
+  testimonials: { quote: string; author: string; role?: string; avatar?: string }[];
+  title?: string;
+  description?: string;
+};
+---
+
+<section class="testimonial-archive">
+  <h1>{title}</h1>
+  {description && <p class="archive-description">{description}</p>}
+
+  <div class="testimonial-grid">
+    {testimonials.map((t) => (
+      <blockquote class="testimonial-card">
+        <p class="testimonial-quote">"{t.quote}"</p>
+        <footer class="testimonial-author">
+          {t.avatar && (
+            <img src={t.avatar} alt={t.author} class="testimonial-avatar" loading="lazy" width={48} height={48} />
+          )}
+          <div>
+            <strong>{t.author}</strong>
+            {t.role && <span>{t.role}</span>}
+          </div>
+        </footer>
+      </blockquote>
+    ))}
+  </div>
+</section>
+
+<style>
+  .testimonial-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+  }
+
+  .testimonial-card {
+    padding: 1.5rem;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-lg, 1rem);
+    background: var(--color-soft-background, #f9fafb);
+    margin: 0;
+  }
+
+  .testimonial-quote {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    font-style: italic;
+    margin: 0 0 1rem;
+  }
+
+  .testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .testimonial-author div {
+    display: grid;
+    gap: 0.1rem;
+  }
+
+  .testimonial-author span {
+    color: var(--color-muted, #6b7280);
+    font-size: 0.85rem;
+  }
+
+  .testimonial-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .archive-description {
+    color: var(--color-muted, #6b7280);
+    margin-bottom: 2rem;
+  }
+</style>

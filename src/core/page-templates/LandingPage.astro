@@ -1,0 +1,17 @@
+---
+import PageBanner from "@kapi/sections/PageBanner.astro";
+import PageSections from "@kapi/sections/PageSections.astro";
+import ContentBody from "@kapi/components/content/ContentBody.astro";
+
+const { page } = Astro.props;
+---
+
+<article class="page-template page-template-landing">
+  <PageBanner banner={page.banner} />
+
+  {page.content && <ContentBody content={page.content} />}
+
+  {page.sections?.length > 0 && (
+    <PageSections sections={page.sections} />
+  )}
+</article>

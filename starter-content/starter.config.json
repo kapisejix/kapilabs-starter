@@ -1,0 +1,25 @@
+{
+  "site": {
+    "name": "Apex Digital",
+    "url": "http://localhost:4321",
+    "description": "Building digital experiences that drive results for businesses worldwide."
+  },
+  "cms": {
+    "backend": "sanity"
+  },
+  "menus": {
+    "primary": [
+      { "label": "Home", "href": "/" },
+      { "label": "About Us", "href": "/about-us" },
+      { "label": "Services", "href": "/services" },
+      { "label": "Blog", "href": "/blog" },
+      { "label": "Contact Us", "href": "/contact-us" }
+    ],
+    "footer": [
+      { "label": "Home", "href": "/" },
+      { "label": "About Us", "href": "/about-us" },
+      { "label": "Services", "href": "/services" },
+      { "label": "Contact Us", "href": "/contact-us" }
+    ]
+  }
+}

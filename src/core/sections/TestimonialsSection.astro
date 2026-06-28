@@ -1,0 +1,66 @@
+---
+import DisplayPresetWrapper from "@kapi/sections/presets/DisplayPresetWrapper.astro";
+
+const { section } = Astro.props;
+const settings = section.settings || {};
+const items = Array.isArray(section.items) ? section.items : [];
+const showHeading = section.heading && !settings.hideTitle;
+---
+
+<section class="section testimonials-section">
+  {showHeading && <h2>{section.heading}</h2>}
+
+  <DisplayPresetWrapper items={items} preset={settings.displayPreset} settings={settings}>
+    {items.map((item: any, _i: number) => (
+      <figure class="testimonial-card">
+        <blockquote class="testimonial-quote">
+          <Fragment set:html={item.quote} />
+        </blockquote>
+        <figcaption>
+          <strong>{item.name}</strong>
+          {item.role && <span>{item.role}</span>}
+        </figcaption>
+      </figure>
+    ))}
+  </DisplayPresetWrapper>
+</section>
+
+<style>
+  .testimonials-section {
+    display: grid;
+    gap: var(--section-gap, 24px);
+  }
+
+  .testimonials-section h2 {
+    margin: 0;
+  }
+
+  .testimonial-card {
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--section-radius, 12px);
+    padding: 24px;
+    background: var(--color-surface, #ffffff);
+    height: 100%;
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+    margin: 0;
+  }
+
+  .testimonial-quote {
+    margin: 0;
+    font-style: italic;
+    color: var(--color-text, #111827);
+    line-height: 1.6;
+  }
+
+  figcaption {
+    display: grid;
+    gap: 2px;
+    color: var(--color-muted, #6b7280);
+    border-top: 1px solid var(--color-border, #e5e7eb);
+    padding-top: 0.75rem;
+  }
+</style>
+
+

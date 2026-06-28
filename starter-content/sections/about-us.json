@@ -1,0 +1,20 @@
+[
+  {
+    "_type": "sectionStats",
+    "type": "stats",
+    "heading": "Our Track Record",
+    "items": [
+      { "value": "2018", "label": "Founded" },
+      { "value": "150+", "label": "Happy Clients" },
+      { "value": "12", "label": "Team Members" }
+    ]
+  },
+  {
+    "_type": "sectionCta",
+    "type": "cta",
+    "heading": "Ready to Work Together?",
+    "text": "Contact us today for a free 30-minute strategy call. No obligation.",
+    "buttonLabel": "Get In Touch",
+    "buttonUrl": "/contact-us"
+  }
+]

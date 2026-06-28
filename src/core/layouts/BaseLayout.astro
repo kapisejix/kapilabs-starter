@@ -1,0 +1,150 @@
+---
+import "../styles/global.css";
+import Header from "@kapi/components/Header.astro";
+import Footer from "@kapi/components/Footer.astro";
+import ThemeVariables from "@kapi/theme/ThemeVariables.astro";
+import CustomCode from "@kapi/theme/CustomCode.astro";
+import SeoHead from "@kapi/seo/SeoHead.astro";
+import {
+  createOrganizationSchema,
+  createWebsiteSchema,
+} from "@kapi/seo/schema";
+import AnnouncementBar from "@kapi/components/AnnouncementBar.astro";
+import { getCmsAdapter } from "@kapi/cms";
+import { loadPlugins, pluginConfigFromEnv } from "@kapi/plugins/loader";
+
+// Module-level initialization guard for plugin system
+let pluginsInitialized = false;
+function ensurePluginsLoaded() {
+  if (pluginsInitialized) return;
+  pluginsInitialized = true;
+  loadPlugins(pluginConfigFromEnv()).catch(console.error);
+}
+
+ensurePluginsLoaded();
+
+const {
+  title = "KapiLabs",
+  description = "CMS-agnostic Astro theme framework",
+  image,
+  canonical,
+  noindex = false,
+  nofollow = false,
+  customCode = {},
+  ogType = "website",
+  twitterCard,
+  jsonLd = [],
+  preloadImage,
+  ogTitle,
+  ogDescription,
+  visibility = {},
+  customBodyClass,
+  themePreset,
+} = Astro.props;
+
+const cms = await getCmsAdapter(Astro);
+const settings = await cms.getSiteSettings();
+
+const primaryMenu = await cms.getMenu("primary");
+const mobileMenu = (await cms.getMenu("mobile")) || primaryMenu;
+const footerMenu = await cms.getMenu("footer");
+const secondaryMenu = await cms.getMenu("secondary");
+const utilityMenu = await cms.getMenu("utility");
+
+// Fetch global sections for reuse across all pages
+const announcementBarSection = await cms.getGlobalSection("announcement-bar");
+
+const canonicalUrl = canonical || Astro.url.href;
+
+const logo = typeof settings?.logo === "string" ? null : settings?.logo;
+const faviconImage = typeof settings?.favicon === "string" ? null : settings?.favicon;
+
+const fallbackImage =
+  typeof image === "string"
+    ? image
+    : image?.src || logo?.src || "";
+
+const favicon = faviconImage?.src || "";
+
+const baseJsonLd = [
+  createWebsiteSchema(settings, Astro.site?.toString() || Astro.url.origin),
+  createOrganizationSchema(settings, Astro.site?.toString() || Astro.url.origin),
+  ...jsonLd,
+];
+
+const bodyClasses = [customBodyClass].filter(Boolean).join(" ");
+const htmlTheme = themePreset ? themePreset : undefined;
+---
+
+<html lang={settings?.locale || "en"} data-theme={htmlTheme}>
+  <head>
+    <SeoHead
+      title={title}
+      description={description}
+      image={fallbackImage}
+      canonicalUrl={canonicalUrl}
+      noindex={noindex}
+      nofollow={nofollow}
+      ogType={ogType}
+      twitterCard={twitterCard}
+      ogTitle={ogTitle}
+      ogDescription={ogDescription}
+      jsonLd={baseJsonLd}
+    />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {favicon && <link rel="icon" href={favicon} />}
+    {preloadImage && <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />}
+
+    <ThemeVariables settings={settings} page={{ themePreset }} />
+    <CustomCode globalCode={settings?.customCode} pageCode={customCode} location="head" />
+  </head>
+
+  <body class={bodyClasses}>
+    <a href="#main-content" class="skip-link">
+      Skip to content
+    </a>
+
+    {!visibility.hideHeader && announcementBarSection?.content?.text && (
+      <AnnouncementBar text={announcementBarSection.content.text} />
+    )}
+
+    {!visibility.hideHeader && (
+      <Header
+        settings={settings}
+        primaryMenu={primaryMenu}
+        mobileMenu={mobileMenu}
+        secondaryMenu={secondaryMenu}
+        utilityMenu={utilityMenu}
+      />
+    )}
+
+    <slot />
+
+    {!visibility.hideFooter && <Footer settings={settings} menu={footerMenu} />}
+
+    <CustomCode globalCode={settings?.customCode} pageCode={customCode} location="footer" />
+  </body>
+</html>
+
+<style>
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    z-index: 10000;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-primary, #111827);
+    color: white;
+    font-weight: 700;
+    text-decoration: none;
+    border-radius: 0 0 0.5rem 0;
+    transition: top 0.1s;
+  }
+
+  .skip-link:focus {
+    top: 0;
+    outline: 2px solid var(--color-secondary, #2563eb);
+    outline-offset: 2px;
+  }
+</style>

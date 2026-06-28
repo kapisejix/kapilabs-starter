@@ -1,0 +1,354 @@
+---
+import BaseLayout from "@kapi/layouts/BaseLayout.astro";
+import { getSites, isMultiSiteEnabled } from "@kapi/multisite/registry";
+
+const sites = await getSites();
+const multiSiteEnabled = await isMultiSiteEnabled();
+const siteCount = sites.length;
+---
+
+<BaseLayout
+  title="Sites — Admin"
+  description="Multi-site management"
+>
+  <main class="admin-sites site-container">
+    <header class="page-header">
+      <h1>Site Management</h1>
+      <p class="subtitle">
+        {multiSiteEnabled
+          ? `${siteCount} site(s) configured in kapilabs.config.ts`
+          : "Single-site mode — no kapilabs.config.ts detected"}
+      </p>
+    </header>
+
+    {multiSiteEnabled ? (
+      <div class="sites-grid">
+        {sites.map((site) => (
+          <div class="site-card">
+            <div class="site-card-header">
+              <h2>{site.name}</h2>
+              <span class="site-key">{site.key}</span>
+            </div>
+
+            <div class="site-card-body">
+              <section class="info-section">
+                <h3>Hostnames</h3>
+                <ul class="hostname-list">
+                  {site.hostnames.map((host) => (
+                    <li>
+                      <code>{host}</code>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section class="info-section">
+                <h3>CMS</h3>
+                <dl class="info-grid">
+                  <dt>Backend</dt>
+                  <dd><code>{site.cms.backend}</code></dd>
+                  <dt>Env Prefix</dt>
+                  <dd><code>{site.cms.envPrefix || "(none)"}</code></dd>
+                </dl>
+              </section>
+
+              {site.theme && (
+                <section class="info-section">
+                  <h3>Theme</h3>
+                  <dl class="info-grid">
+                    <dt>Name</dt>
+                    <dd><code>{site.theme.name}</code></dd>
+                    {site.theme.extends && (
+                      <>
+                        <dt>Extends</dt>
+                        <dd><code>{site.theme.extends}</code></dd>
+                      </>
+                    )}
+                  </dl>
+                </section>
+              )}
+
+              {site.features && site.features.length > 0 && (
+                <section class="info-section">
+                  <h3>Features</h3>
+                  <div class="feature-tags">
+                    {site.features.map((f) => (
+                      <span class="tag">{f}</span>
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
+
+            <div class="site-card-footer">
+              <span class="hostname-preview">
+                {site.defaultHostname || site.hostnames[0] || "—"}
+              </span>
+              <a href={`https://${site.defaultHostname || site.hostnames[0] || "localhost"}`} class="visit-link" target="_blank" rel="noopener noreferrer">
+                Visit →
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    ) : (
+      <div class="single-site-info">
+        <div class="info-card">
+          <h2>Single-Site Mode</h2>
+          <p>
+            KapiLabs is running in single-site mode. All content is served from
+            a single CMS backend using standard (unprefixed) environment variables.
+          </p>
+
+          <h3>Enable Multi-Site Mode</h3>
+          <p>
+            Create a <code>kapilabs.config.ts</code> file at the project root
+            with a <code>sites</code> array. Each site can have its own:
+          </p>
+          <ul>
+            <li>Hostnames (domain-based routing)</li>
+            <li>CMS backend (different Sanity projects, etc.)</li>
+            <li>Theme settings and overrides</li>
+            <li>Feature flags</li>
+          </ul>
+
+          <p class="mt">
+            Environment variables for each site are namespaced with the configured
+            <code>envPrefix</code>. For example, site "client-a" with prefix
+            <code>CLIENT_A_</code> reads <code>CLIENT_A_PUBLIC_SANITY_PROJECT_ID</code>.
+          </p>
+        </div>
+      </div>
+    )}
+
+    <section class="env-section">
+      <h2>Environment Variables</h2>
+      <p class="help-text">
+        In multi-site mode, standard env vars are prefixed per site.
+        Unprefixed vars continue to work as fallbacks.
+      </p>
+      <table class="env-table">
+        <thead>
+          <tr>
+            <th>Variable</th>
+            <th>With Prefix "CLIENT_A_"</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>PUBLIC_CMS_BACKEND</code></td><td><code>CLIENT_A_PUBLIC_CMS_BACKEND</code></td></tr>
+          <tr><td><code>PUBLIC_SANITY_PROJECT_ID</code></td><td><code>CLIENT_A_PUBLIC_SANITY_PROJECT_ID</code></td></tr>
+          <tr><td><code>PUBLIC_SANITY_DATASET</code></td><td><code>CLIENT_A_PUBLIC_SANITY_DATASET</code></td></tr>
+          <tr><td><code>SANITY_TOKEN</code></td><td><code>CLIENT_A_SANITY_TOKEN</code></td></tr>
+          <tr><td><code>PUBLIC_TURNSTILE_SITE_KEY</code></td><td><code>CLIENT_A_PUBLIC_TURNSTILE_SITE_KEY</code></td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  .admin-sites {
+    padding: 2rem 0;
+  }
+
+  .page-header {
+    margin-bottom: 2rem;
+  }
+
+  .page-header h1 {
+    margin: 0 0 0.5rem;
+  }
+
+  .subtitle {
+    color: var(--color-muted, #6b7280);
+    margin: 0;
+  }
+
+  .sites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .site-card {
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.5rem);
+    background: var(--color-surface, #fff);
+    overflow: hidden;
+  }
+
+  .site-card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .site-card-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  .site-key {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    background: var(--color-soft-background, #f0f4ff);
+    border-radius: 999px;
+    color: var(--color-secondary, #2563eb);
+    font-weight: 600;
+  }
+
+  .site-card-body {
+    padding: 1rem 1.25rem;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .info-section h3 {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted, #6b7280);
+    margin: 0 0 0.5rem;
+  }
+
+  .hostname-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .hostname-list li {
+    padding: 0.25rem 0;
+  }
+
+  .hostname-list code {
+    font-size: 0.85rem;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 0.75rem;
+    margin: 0;
+  }
+
+  .info-grid dt {
+    color: var(--color-muted, #6b7280);
+    font-size: 0.85rem;
+  }
+
+  .info-grid dd {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+
+  .feature-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    background: var(--color-soft-background, #f0f4ff);
+    border-radius: 999px;
+    font-size: 0.75rem;
+    color: var(--color-secondary, #2563eb);
+    font-weight: 500;
+  }
+
+  .site-card-footer {
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--color-border, #e5e7eb);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
+  }
+
+  .hostname-preview {
+    color: var(--color-muted, #6b7280);
+  }
+
+  .visit-link {
+    color: var(--color-secondary, #2563eb);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .single-site-info,
+  .env-section {
+    margin-bottom: 2rem;
+  }
+
+  .info-card {
+    padding: 1.5rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--radius-md, 0.5rem);
+    background: var(--color-surface, #fff);
+    max-width: 700px;
+  }
+
+  .info-card h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.25rem;
+  }
+
+  .info-card h3 {
+    margin: 1.25rem 0 0.5rem;
+    font-size: 1rem;
+  }
+
+  .info-card p {
+    color: var(--color-muted, #6b7280);
+    margin: 0 0 0.75rem;
+    line-height: 1.6;
+  }
+
+  .info-card ul {
+    margin: 0 0 0.75rem;
+    padding-left: 1.25rem;
+  }
+
+  .info-card li {
+    color: var(--color-muted, #6b7280);
+    margin-bottom: 0.35rem;
+  }
+
+  .mt {
+    margin-top: 1rem;
+  }
+
+  .help-text {
+    color: var(--color-muted, #6b7280);
+    margin-bottom: 1rem;
+  }
+
+  .env-table {
+    width: 100%;
+    max-width: 700px;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  .env-table th,
+  .env-table td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    text-align: left;
+  }
+
+  .env-table th {
+    background: var(--color-soft-background, #f9fafb);
+    font-weight: 600;
+  }
+
+  .env-table code {
+    font-size: 0.8rem;
+  }
+</style>

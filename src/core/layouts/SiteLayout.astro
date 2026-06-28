@@ -1,0 +1,80 @@
+---
+import BaseLayout from "@kapi/layouts/BaseLayout.astro";
+import KapiLayout from "@kapi/layouts/KapiLayout.astro";
+import WidgetArea from "@kapi/components/WidgetArea.astro";
+import type { KapiLayoutConfig } from "@kapi/templates/types";
+
+const {
+  title,
+  description,
+  image,
+  customCode,
+  layout = "content-sidebar",
+  layoutConfig,
+  ogType,
+  canonical,
+  noindex,
+  nofollow,
+  twitterCard,
+  ogTitle,
+  ogDescription,
+  jsonLd,
+  visibility = {},
+  customBodyClass,
+  themePreset,
+}: {
+  title?: string;
+  description?: string;
+  image?: any;
+  customCode?: any;
+  layout?: string;
+  layoutConfig?: Partial<KapiLayoutConfig>;
+  ogType?: string;
+  canonical?: string;
+  noindex?: boolean;
+  nofollow?: boolean;
+  twitterCard?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  jsonLd?: any[];
+  visibility?: Record<string, boolean>;
+  customBodyClass?: string;
+  themePreset?: string;
+} = Astro.props;
+
+// Merge layout config with layout string
+const mergedConfig = {
+  ...layoutConfig,
+  layout: undefined, // resolved from the layout prop
+};
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  image={image}
+  customCode={customCode}
+  ogType={ogType}
+  canonical={canonical}
+  noindex={noindex}
+  nofollow={nofollow}
+  twitterCard={twitterCard}
+  ogTitle={ogTitle}
+  ogDescription={ogDescription}
+  jsonLd={jsonLd}
+  visibility={visibility}
+  customBodyClass={customBodyClass}
+  themePreset={themePreset}
+>
+  <WidgetArea name="before-content" />
+
+  <section class="site-main" id="main-content">
+    <div class="site-container">
+      <KapiLayout layout={layout} config={mergedConfig}>
+        <slot />
+      </KapiLayout>
+    </div>
+  </section>
+
+  <WidgetArea name="after-content" />
+</BaseLayout>

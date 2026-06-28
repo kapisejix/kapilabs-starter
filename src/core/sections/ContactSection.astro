@@ -1,0 +1,44 @@
+---
+import { sanitizeContent } from "@kapi/utils/sanitizeHtml";
+
+const { section } = Astro.props;
+const settings = section.settings || {};
+const showHeading = section.heading && !settings.hideTitle;
+---
+
+<section class="section contact-section">
+  <div>
+    {showHeading && <h2>{section.heading}</h2>}
+    {section.text && <Fragment set:html={sanitizeContent(section.text)} />}
+  </div>
+
+  <div class="contact-card">
+    {section.phone && <p><strong>Phone:</strong> {section.phone}</p>}
+    {section.email && <p><strong>Email:</strong> <a href={`mailto:${section.email}`}>{section.email}</a></p>}
+    {section.address && <p><strong>Address:</strong> {section.address}</p>}
+  </div>
+</section>
+
+<style>
+  .contact-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--section-gap, 32px);
+    align-items: start;
+  }
+
+  .contact-card {
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--section-radius, 16px);
+    padding: 24px;
+    background: var(--color-surface, #ffffff);
+  }
+
+  @media (max-width: 800px) {
+    .contact-section {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+

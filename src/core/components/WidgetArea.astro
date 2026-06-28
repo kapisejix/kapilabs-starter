@@ -1,0 +1,176 @@
+---
+import { getMenu, getWidgets } from "@kapi/cms";
+import { isWidgetArea } from "@kapi/theme/widgetAreas";
+import RecentPostsWidget from "@kapi/components/widgets/RecentPostsWidget.astro";
+import NewsletterWidget from "@kapi/components/widgets/NewsletterWidget.astro";
+import SocialLinksWidget from "@kapi/components/widgets/SocialLinksWidget.astro";
+import AdvertisementWidget from "@kapi/components/widgets/AdvertisementWidget.astro";
+
+const { name = "primary-sidebar" } = Astro.props;
+
+if (!isWidgetArea(name)) {
+  throw new Error(`Invalid widget area: ${name}`);
+}
+
+const widgets = await getWidgets(name);
+
+// Pre-fetch menus for all menu-type widgets so the template stays synchronous
+const menuWidgetList = widgets.filter((w) => w.type === "menu" && w.menuName);
+const menuResults = await Promise.all(menuWidgetList.map((w) => getMenu(w.menuName!)));
+const menuMap = new Map<string, Awaited<ReturnType<typeof getMenu>>>(
+  menuWidgetList.map((w, i) => [w.menuName!, menuResults[i]])
+);
+---
+
+<section class="widget-area" data-widget-area={name}>
+  {widgets.length > 0 ? (
+    widgets.map((widget) => {
+      if (widget.type === "text") {
+        return (
+          <div class="widget widget-text">
+            {widget.title && <h3>{widget.title}</h3>}
+            {widget.content && <p>{widget.content}</p>}
+          </div>
+        );
+      }
+
+      if (widget.type === "html") {
+        return (
+          <div class="widget widget-html">
+            {widget.title && <h3>{widget.title}</h3>}
+            {widget.content && <Fragment set:html={widget.content} />}
+          </div>
+        );
+      }
+
+      if (widget.type === "cta") {
+        return (
+          <div class="widget widget-cta">
+            {widget.title && <h3>{widget.title}</h3>}
+            {widget.content && <p>{widget.content}</p>}
+            {widget.buttonLabel && widget.buttonUrl && (
+              <a class="widget-button" href={widget.buttonUrl}>
+                {widget.buttonLabel}
+              </a>
+            )}
+          </div>
+        );
+      }
+
+      if (widget.type === "menu" && widget.menuName) {
+        const menu = menuMap.get(widget.menuName);
+
+        return (
+          <div class="widget widget-menu">
+            {widget.title && <h3>{widget.title}</h3>}
+            <nav>
+              {menu?.items.map((item) => (
+                <a href={item.url}>{item.label}</a>
+              ))}
+            </nav>
+          </div>
+        );
+      }
+
+      if (widget.type === "recent-posts") {
+        return <RecentPostsWidget title={widget.title} count={(widget as any).count || 5} />;
+      }
+
+      if (widget.type === "newsletter") {
+        return (
+          <NewsletterWidget
+            title={widget.title}
+            description={widget.content as string}
+            buttonLabel={widget.buttonLabel}
+          />
+        );
+      }
+
+      if (widget.type === "social-links") {
+        return <SocialLinksWidget title={widget.title} />;
+      }
+
+      if (widget.type === "advertisement") {
+        return (
+          <AdvertisementWidget
+            title={widget.title}
+            html={widget.content as string}
+            imageUrl={(widget as any).imageUrl}
+            linkUrl={(widget as any).linkUrl}
+            altText={(widget as any).altText}
+          />
+        );
+      }
+
+      return null;
+    })
+  ) : (
+    <slot />
+  )}
+</section>
+
+<style>
+  .widget-area {
+    display: grid;
+    gap: 16px;
+  }
+
+  .widget {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+    background: #ffffff;
+    color: #111827;
+  }
+
+  .widget h3 {
+    margin: 0 0 10px;
+    font-size: 18px;
+  }
+
+  .widget p {
+    margin: 0;
+    color: #4b5563;
+  }
+
+  .widget-menu nav {
+    display: grid;
+    gap: 8px;
+  }
+
+  .widget-button {
+    display: inline-flex;
+    margin-top: 14px;
+    border: 1px solid #111827;
+    border-radius: 999px;
+    padding: 10px 14px;
+    font-weight: 700;
+  }
+
+  [data-widget-area="before-header"] .widget,
+  [data-widget-area="after-header"] .widget,
+  [data-widget-area="before-content"] .widget,
+  [data-widget-area="after-content"] .widget {
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+    text-align: center;
+  }
+
+  [data-widget-area="header-right"] .widget {
+    border: 0;
+    padding: 0;
+  }
+
+  [data-widget-area^="footer"] .widget {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: white;
+  }
+
+  [data-widget-area^="footer"] .widget p,
+  [data-widget-area^="footer"] .widget a {
+    color: #d1d5db;
+  }
+</style>

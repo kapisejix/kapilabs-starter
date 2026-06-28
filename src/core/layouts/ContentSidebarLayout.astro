@@ -1,0 +1,19 @@
+---
+import BaseLayout from "@kapi/layouts/BaseLayout.astro";
+import Sidebar from "@kapi/components/Sidebar.astro";
+
+const { title, description, image, customCode, canonical, noindex, nofollow, ogType, twitterCard, jsonLd } = Astro.props;
+---
+
+<BaseLayout title={title} description={description} image={image} customCode={customCode} canonical={canonical} noindex={noindex} nofollow={nofollow} ogType={ogType} twitterCard={twitterCard} jsonLd={jsonLd}>
+  <main class="site-main">
+    <div class="site-container site-grid">
+      <article>
+        <slot />
+      </article>
+
+      <Sidebar />
+    </div>
+  </main>
+</BaseLayout>
+

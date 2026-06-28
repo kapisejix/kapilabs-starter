@@ -1,0 +1,36 @@
+---
+const {
+  globalCode: _globalCode,
+  pageCode: _pageCode,
+  location = "head",
+} = Astro.props;
+
+const globalCode = _globalCode ?? {};
+const pageCode = _pageCode ?? {};
+
+const wrapScript = (code: string) => {
+  const trimmed = code.trim();
+  if (!trimmed) return "";
+  if (trimmed.includes("<script")) return trimmed;
+  return `<script>${trimmed}</script>`;
+};
+
+const css = [
+  globalCode.globalCss,
+  pageCode.customCss,
+].filter(Boolean).join("\n");
+
+const headerScripts = [
+  globalCode.globalHeaderScripts,
+  pageCode.headerScripts,
+].filter(Boolean).map(wrapScript).join("\n");
+
+const footerScripts = [
+  globalCode.globalFooterScripts,
+  pageCode.footerScripts,
+].filter(Boolean).map(wrapScript).join("\n");
+---
+
+{location === "head" && css && <style is:inline set:html={css}></style>}
+{location === "head" && headerScripts && <Fragment set:html={headerScripts} />}
+{location === "footer" && footerScripts && <Fragment set:html={footerScripts} />}

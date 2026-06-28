@@ -1,0 +1,14 @@
+packages:
+  - packages/*
+  - studio
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+  workerd: set this to true or false
+
+minimumReleaseAgeExclude:
+  - astro@7.0.3
+
+overrides:
+  vite: "^7"

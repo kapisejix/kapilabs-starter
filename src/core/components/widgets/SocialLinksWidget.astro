@@ -1,0 +1,75 @@
+---
+import { getSiteSettings } from "@kapi/cms";
+
+const { title } = Astro.props;
+const settings = await getSiteSettings();
+const social = (settings?.social || {}) as Record<string, string>;
+
+const platforms: { key: string; label: string }[] = [
+  { key: "facebook", label: "Facebook" },
+  { key: "instagram", label: "Instagram" },
+  { key: "linkedin", label: "LinkedIn" },
+  { key: "x", label: "X (Twitter)" },
+  { key: "youtube", label: "YouTube" },
+  { key: "github", label: "GitHub" },
+  { key: "tiktok", label: "TikTok" },
+];
+
+const links = platforms.filter((p) => social[p.key]);
+---
+
+<div class="widget widget-social-links">
+  {title && <h3>{title}</h3>}
+  <div class="social-links">
+    {links.map(({ key, label }) => (
+      <a
+        href={social[key]}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={label}
+        class="social-link"
+      >
+        <span class="social-icon">{label[0]}</span>
+        <span class="social-label">{label}</span>
+      </a>
+    ))}
+  </div>
+</div>
+
+<style>
+  .social-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm, 0.375rem);
+    background: var(--color-soft-background, #f9fafb);
+    color: var(--color-text, #111827);
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.15s;
+  }
+
+  .social-link:hover {
+    background: var(--color-border, #e5e7eb);
+  }
+
+  .social-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--color-primary, #111827);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+</style>

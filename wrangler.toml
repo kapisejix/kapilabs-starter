@@ -1,0 +1,37 @@
+# ─── Cloudflare Pages Configuration ────────────────────────────────────────────
+# Deploy: pnpm build && npx wrangler pages deploy dist/ --branch main
+# Local dev with bindings: npx wrangler pages dev -- pnpm dev
+#
+# Create resources:
+#   npx wrangler d1 create kapilabs-db
+#   npx wrangler r2 bucket create kapilabs-assets
+#   npx wrangler kv namespace create kapilabs-sessions
+
+name = "kapilabs"
+compatibility_date = "2026-04-20"
+compatibility_flags = ["nodejs_compat"]
+
+# ── D1 Database (form submissions, structured data) ─────────────────────────
+# Create: npx wrangler d1 create kapilabs-db
+# Then copy the database_id output here
+[[d1_databases]]
+binding = "DB"
+database_name = "kapilabs-db"
+database_id = "your-d1-database-id"
+
+# ── R2 Bucket (file uploads, images, PDFs) ──────────────────────────────────
+# Create: npx wrangler r2 bucket create kapilabs-assets
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "kapilabs-assets"
+
+# ── KV Namespace (sessions, cache, feature flags, rate limits) ──────────────
+# Create: npx wrangler kv namespace create kapilabs-sessions
+[[kv_namespaces]]
+binding = "KV"
+id = "your-kv-namespace-id"
+
+# ── Routes (uncomment to use custom domain) ─────────────────────────────────
+# routes = [
+#   { pattern = "yourdomain.com", zone_id = "your-zone-id" },
+# ]

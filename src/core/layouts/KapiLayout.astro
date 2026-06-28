@@ -1,0 +1,127 @@
+---
+import PrimarySidebar from "@kapi/components/PrimarySidebar.astro";
+import SecondarySidebar from "@kapi/components/SecondarySidebar.astro";
+import type { KapiLayout, KapiLayoutConfig } from "@kapi/templates/types";
+import { resolveLayoutConfig } from "@kapi/templates/resolveLayout";
+
+const {
+  layout = "content-sidebar",
+  config,
+}: {
+  layout?: KapiLayout | string;
+  config?: Partial<KapiLayoutConfig>;
+} = Astro.props;
+
+const resolved: KapiLayoutConfig = resolveLayoutConfig(layout, config);
+const l = resolved.layout;
+
+const gap = resolved.gap || "24px";
+const sidebarWidth = resolved.sidebarWidth || "320px";
+const containerWidth = resolved.containerWidth || "1200px";
+const contentWidth = resolved.contentWidth || "760px";
+const sidebarSticky = resolved.sidebarSticky !== false;
+const padding = resolved.padding || "0";
+const bg = resolved.background || "transparent";
+
+const stickyStyle = sidebarSticky ? "position: sticky; top: 2rem;" : "";
+---
+
+{l === "content-sidebar" && (
+  <div class="genesis-layout content-sidebar" style={`gap: ${gap}; max-width: ${containerWidth}; padding: ${padding}; background: ${bg}; --sidebar-width: ${sidebarWidth};`}>
+    <main style={`min-width: 0;`}><slot /></main>
+    <PrimarySidebar style={stickyStyle} />
+  </div>
+)}
+
+{l === "sidebar-content" && (
+  <div class="genesis-layout sidebar-content" style={`gap: ${gap}; max-width: ${containerWidth}; padding: ${padding}; background: ${bg}; --sidebar-width: ${sidebarWidth};`}>
+    <PrimarySidebar style={stickyStyle} />
+    <main style={`min-width: 0;`}><slot /></main>
+  </div>
+)}
+
+{l === "content-sidebar-sidebar" && (
+  <div class="genesis-layout content-sidebar-sidebar" style={`gap: ${gap}; max-width: ${containerWidth}; padding: ${padding}; background: ${bg}; --sidebar-width: ${sidebarWidth};`}>
+    <main style={`min-width: 0;`}><slot /></main>
+    <PrimarySidebar style={stickyStyle} />
+    <SecondarySidebar style={stickyStyle} />
+  </div>
+)}
+
+{l === "sidebar-sidebar-content" && (
+  <div class="genesis-layout sidebar-sidebar-content" style={`gap: ${gap}; max-width: ${containerWidth}; padding: ${padding}; background: ${bg}; --sidebar-width: ${sidebarWidth};`}>
+    <SecondarySidebar style={stickyStyle} />
+    <PrimarySidebar style={stickyStyle} />
+    <main style={`min-width: 0;`}><slot /></main>
+  </div>
+)}
+
+{l === "sidebar-content-sidebar" && (
+  <div class="genesis-layout sidebar-content-sidebar" style={`gap: ${gap}; max-width: ${containerWidth}; padding: ${padding}; background: ${bg}; --sidebar-width: ${sidebarWidth};`}>
+    <PrimarySidebar style={stickyStyle} />
+    <main style={`min-width: 0;`}><slot /></main>
+    <SecondarySidebar style={stickyStyle} />
+  </div>
+)}
+
+{l === "full-width-content" && (
+  <div class="genesis-layout full-width-content" style={`gap: ${gap}; max-width: ${containerWidth}; padding: ${padding}; background: ${bg};`}>
+    <main><slot /></main>
+  </div>
+)}
+
+{l === "centered" && (
+  <div class="genesis-layout centered" style={`gap: ${gap}; max-width: ${contentWidth}; padding: ${padding}; background: ${bg}; margin: 0 auto;`}>
+    <main><slot /></main>
+  </div>
+)}
+
+{l === "blank" && (
+  <div class="genesis-layout blank" style={`padding: ${padding}; background: ${bg};`}>
+    <main><slot /></main>
+  </div>
+)}
+
+<style>
+.genesis-layout {
+  display: grid;
+  gap: 24px;
+}
+
+.content-sidebar {
+  grid-template-columns: minmax(0px, 1fr) var(--sidebar-width, 320px);
+}
+
+.sidebar-content {
+  grid-template-columns: var(--sidebar-width, 320px) minmax(0px, 1fr);
+}
+
+.content-sidebar-sidebar {
+  grid-template-columns: minmax(0px, 1fr) var(--sidebar-width, 300px) var(--sidebar-width, 300px);
+}
+
+.sidebar-sidebar-content {
+  grid-template-columns: var(--sidebar-width, 300px) var(--sidebar-width, 300px) minmax(0px, 1fr);
+}
+
+.sidebar-content-sidebar {
+  grid-template-columns: var(--sidebar-width, 300px) minmax(0px, 1fr) var(--sidebar-width, 300px);
+}
+
+.full-width-content,
+.centered,
+.blank {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 1024px) {
+  .content-sidebar,
+  .sidebar-content,
+  .content-sidebar-sidebar,
+  .sidebar-sidebar-content,
+  .sidebar-content-sidebar {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+

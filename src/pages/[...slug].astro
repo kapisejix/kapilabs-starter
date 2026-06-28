@@ -1,0 +1,61 @@
+---
+export const prerender = false;
+
+import SiteLayout from "@kapi/layouts/SiteLayout.astro";
+import { getCmsAdapter } from "@kapi/cms";
+import { resolvePageTemplate } from "@kapi/page-templates/resolvePageTemplate";
+import { createBreadcrumbSchema } from "@kapi/seo/schema";
+
+const slug = Astro.params.slug || "";
+const cms = await getCmsAdapter(Astro);
+const page = await cms.getPage(slug);
+
+if (!page) {
+  return Astro.redirect("/404");
+}
+
+Astro.response.headers.set("Cache-Control", "public, max-age=0, s-maxage=600, stale-while-revalidate=300");
+
+const PageTemplate = resolvePageTemplate(page.template);
+
+const breadcrumbJsonLd = createBreadcrumbSchema([
+  { name: "Home", url: "/" },
+  { name: page.seo?.breadcrumbTitle || page.title, url: Astro.url.href },
+]);
+
+// Determine if we should hide breadcrumbs based on visibility settings
+const hideBreadcrumbs = page.visibility?.hideBreadcrumbs;
+const jsonLd = hideBreadcrumbs ? [] : [breadcrumbJsonLd];
+
+// Resolve layout config from page overrides
+const layoutConfig = page.layoutOverride ? {
+  containerWidth: page.layoutOverride.containerWidth,
+  contentWidth: page.layoutOverride.contentWidth,
+  sidebarWidth: page.layoutOverride.sidebarWidth,
+  sidebarSticky: page.layoutOverride.sidebarSticky,
+  gap: page.layoutOverride.gap,
+  padding: page.layoutOverride.padding,
+  background: page.layoutOverride.background,
+} : undefined;
+---
+
+<SiteLayout
+  title={page.seo?.title || page.title}
+  description={page.seo?.description}
+  image={page.seo?.image || page.featuredImage}
+  customCode={page.customCode}
+  layout={page.layout}
+  layoutConfig={layoutConfig}
+  canonical={page.seo?.canonicalUrl}
+  noindex={page.seo?.noindex}
+  nofollow={page.seo?.nofollow}
+  twitterCard={page.seo?.twitterCard}
+  ogTitle={page.seo?.ogTitle}
+  ogDescription={page.seo?.ogDescription}
+  jsonLd={jsonLd}
+  visibility={page.visibility ?? {}}
+  customBodyClass={page.customBodyClass}
+  themePreset={page.themePreset}
+>
+  <PageTemplate page={page} />
+</SiteLayout>

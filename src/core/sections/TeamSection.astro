@@ -1,0 +1,71 @@
+---
+import DisplayPresetWrapper from "@kapi/sections/presets/DisplayPresetWrapper.astro";
+import { sanitizeContent } from "@kapi/utils/sanitizeHtml";
+
+const { section } = Astro.props;
+const settings = section.settings || {};
+const items = Array.isArray(section.items) ? section.items : [];
+const showHeading = section.heading && !settings.hideTitle;
+---
+
+<section class="section team-section">
+  {showHeading && <h2>{section.heading}</h2>}
+
+  <DisplayPresetWrapper items={items} preset={settings.displayPreset} settings={settings}>
+    {items.map((item: any, _i: number) => (
+      <article class="team-card">
+        {item.image?.src && (
+          <img
+            src={item.image.src}
+            alt={item.image.alt || item.name}
+            width={item.image.width}
+            height={item.image.height}
+            loading="lazy"
+            decoding="async"
+          />
+        )}
+        <h3>{item.name}</h3>
+        {item.role && <p class="role">{item.role}</p>}
+        {item.bio && <Fragment set:html={sanitizeContent(item.bio)} />}
+      </article>
+    ))}
+  </DisplayPresetWrapper>
+</section>
+
+<style>
+  .team-section {
+    display: grid;
+    gap: var(--section-gap, 24px);
+  }
+
+  .team-section h2 {
+    margin: 0;
+  }
+
+  .team-card {
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: var(--section-radius, 16px);
+    padding: 24px;
+    background: var(--color-surface, #ffffff);
+    height: 100%;
+    display: grid;
+    align-content: start;
+    gap: 0.5rem;
+  }
+
+  .team-card img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 12px;
+    margin-bottom: 16px;
+  }
+
+  .role {
+    color: var(--color-muted, #6b7280);
+    font-weight: 700;
+  }
+</style>
+
+
+

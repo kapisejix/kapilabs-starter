@@ -1,0 +1,110 @@
+@import "tailwindcss";
+
+/* Ensure all @font-face declarations use font-display: swap for fast first paint */
+@font-face {
+  font-family: "system-fallback";
+  src: local("system-ui"), local("Segoe UI"), local("Roboto");
+  font-display: swap;
+}
+
+:root {
+  --site-width: var(--container-width, 1200px);
+  --gap: var(--space-md, 1.5rem);
+  --border: var(--color-border, #e5e7eb);
+  --text: var(--color-text, #111827);
+  --muted: var(--color-muted, #6b7280);
+  --bg: var(--color-background, #ffffff);
+  --soft-bg: var(--color-soft-background, #f9fafb);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: light;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+  color: var(--text);
+  background: var(--bg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.site-container {
+  width: min(100% - 32px, var(--site-width));
+  margin-inline: auto;
+}
+
+.site-main {
+  padding: var(--space-xl, 3rem) 0;
+}
+
+.site-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: var(--gap);
+}
+
+.full-width {
+  width: min(100% - 32px, var(--site-width));
+  margin-inline: auto;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg, 1rem);
+  padding: var(--space-md, 1.5rem);
+  background: var(--color-background, #ffffff);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.button,
+.btn,
+button {
+  border-radius: var(--button-radius, var(--radius-md, 0.5rem));
+}
+
+@media (max-width: 800px) {
+  .site-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-secondary, #2563eb);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}

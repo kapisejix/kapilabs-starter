@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KapiLabs Setup Guide</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; color: #1e293b; line-height: 1.7; }
+    .header { background: #0f172a; color: #fff; padding: 2rem; }
+    .header h1 { font-size: 1.75rem; font-weight: 700; }
+    .header p { color: #94a3b8; margin-top: 0.5rem; }
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem; }
+    h2 { font-size: 1.4rem; font-weight: 700; margin: 2rem 0 0.75rem; color: #0f172a; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; }
+    h3 { font-size: 1.1rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: #1e293b; }
+    p, li { font-size: 0.95rem; margin-bottom: 0.5rem; }
+    ul, ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+    code { background: #f1f5f9; border: 1px solid #e2e8f0; padding: 0.15rem 0.4rem; border-radius: 4px; font-family: monospace; font-size: 0.85rem; }
+    pre { background: #0f172a; color: #e2e8f0; padding: 1.25rem; border-radius: 8px; overflow-x: auto; margin: 1rem 0; }
+    pre code { background: none; border: none; padding: 0; font-size: 0.85rem; color: #e2e8f0; }
+    .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 1.5rem; margin: 1rem 0; }
+    .card.blue { border-left: 4px solid #3b82f6; }
+    .card.green { border-left: 4px solid #10b981; }
+    .card.amber { border-left: 4px solid #f59e0b; }
+    .card.red { border-left: 4px solid #ef4444; }
+    .card strong { display: block; font-weight: 700; margin-bottom: 0.5rem; }
+    .step { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+    .step-num { flex-shrink: 0; width: 2rem; height: 2rem; background: #2563eb; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; }
+    .step-body { flex: 1; padding-top: 0.15rem; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+    .url-chip { display: inline-block; background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 0.3rem 0.75rem; border-radius: 20px; font-family: monospace; font-size: 0.85rem; margin: 0.25rem 0; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th { background: #f1f5f9; padding: 0.5rem; border: 1px solid #e2e8f0; text-align: left; font-size: 0.85rem; }
+    td { padding: 0.5rem; border: 1px solid #e2e8f0; font-size: 0.9rem; }
+    footer { text-align: center; padding: 2rem; color: #64748b; font-size: 0.85rem; border-top: 1px solid #e2e8f0; margin-top: 3rem; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>KapiLabs Astro Framework &mdash; Setup Guide</h1>
+  <p>Everything you need to run this site on localhost and manage content in Sanity Studio.</p>
+</div>
+
+<div class="container">
+
+  <h2>Local URLs</h2>
+  <p>After starting the dev servers, use these addresses:</p>
+  <div class="grid">
+    <div class="card blue">
+      <strong>Astro Website</strong>
+      <span class="url-chip">http://localhost:4321</span>
+      <p style="margin-top:0.5rem;font-size:0.85rem;">Run: <code>pnpm dev</code> from project root.</p>
+    </div>
+    <div class="card green">
+      <strong>Sanity Studio (CMS)</strong>
+      <span class="url-chip">http://localhost:3333</span>
+      <p style="margin-top:0.5rem;font-size:0.85rem;">Run: <code>npx sanity dev</code> from <code>studio/</code> folder.</p>
+    </div>
+  </div>
+
+  <h2>Fresh Setup Steps</h2>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h3>Create a free Sanity project</h3>
+      <p>Go to <a href="https://sanity.io/manage" target="_blank">sanity.io/manage</a> &rarr; New Project. Copy your <strong>Project ID</strong>.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h3>Set up .env file</h3>
+      <p>Copy <code>.env.example</code> to <code>.env</code> in the project root. Fill in:</p>
+      <pre><code>PUBLIC_SANITY_PROJECT_ID=your-project-id
+PUBLIC_SANITY_DATASET=production
+SANITY_TOKEN=your-write-token
+SITE_URL=http://localhost:4321</code></pre>
+      <p>Get a write token: <a href="https://sanity.io/manage" target="_blank">sanity.io/manage</a> &rarr; your project &rarr; API &rarr; Tokens &rarr; Add API Token (Editor role).</p>
+      <p>Also copy <code>studio/.env.example</code> to <code>studio/.env</code> and fill in <code>SANITY_STUDIO_PROJECT_ID</code>.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h3>Install dependencies</h3>
+      <pre><code>pnpm install
+cd studio &amp;&amp; pnpm install</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h3>Deploy schema to Sanity</h3>
+      <pre><code>cd studio &amp;&amp; npx sanity schema deploy</code></pre>
+      <p>This registers all schema types so Studio knows how to render them.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body">
+      <h3>Seed starter content</h3>
+      <pre><code>pnpm seed</code></pre>
+      <p>Creates pages, posts, team members, testimonials, forms, and menus in Sanity.</p>
+      <p>Test first without writing: <code>node scripts/seed-sanity.mjs --dry-run</code></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-body">
+      <h3>Start dev servers</h3>
+      <p>Terminal 1: <code>pnpm dev</code> &rarr; <span class="url-chip">http://localhost:4321</span></p>
+      <p>Terminal 2: <code>cd studio &amp;&amp; npx sanity dev</code> &rarr; <span class="url-chip">http://localhost:3333</span></p>
+    </div>
+  </div>
+
+  <h2>Project Structure</h2>
+  <div class="card blue">
+    <strong>Two-Layer Source Split</strong>
+    <p><code>src/core/</code> &mdash; framework. Never edit directly.</p>
+    <p><code>src/theme/</code> &mdash; your customizations. Shadow any core file here.</p>
+    <p>To override: copy file from <code>src/core/</code> to same path in <code>src/theme/</code> and edit there.</p>
+  </div>
+
+  <h2>Content Types in Studio</h2>
+  <table>
+    <thead><tr><th>Type</th><th>What it is</th><th>URL</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Pages</strong></td><td>Website pages with sections</td><td>Any slug</td></tr>
+      <tr><td><strong>Posts</strong></td><td>Blog articles</td><td>/blog/[slug]</td></tr>
+      <tr><td><strong>Team Members</strong></td><td>Staff profiles</td><td>Team section</td></tr>
+      <tr><td><strong>Testimonials</strong></td><td>Client reviews</td><td>Testimonials section</td></tr>
+      <tr><td><strong>Menus</strong></td><td>Navigation links</td><td>Header / Footer</td></tr>
+      <tr><td><strong>Forms</strong></td><td>Contact forms</td><td>Form section</td></tr>
+      <tr><td><strong>Site Settings</strong></td><td>Site name, tagline</td><td>Meta / header</td></tr>
+      <tr><td><strong>Theme Settings</strong></td><td>Colors, fonts, layout</td><td>CSS variables</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Available Page Sections</h2>
+  <div class="grid">
+    <div class="card"><strong>Hero</strong><p>Full-width banner with heading, text, and CTA button.</p></div>
+    <div class="card"><strong>Services</strong><p>Grid of service cards with title, description, link.</p></div>
+    <div class="card"><strong>Stats</strong><p>Row of numbers/metrics for social proof.</p></div>
+    <div class="card"><strong>Testimonials</strong><p>Client reviews — inline or from library.</p></div>
+    <div class="card"><strong>CTA</strong><p>Call-to-action banner with heading and button.</p></div>
+    <div class="card"><strong>FAQ</strong><p>Accordion of questions with answers.</p></div>
+    <div class="card"><strong>Team</strong><p>Grid of team member cards.</p></div>
+    <div class="card"><strong>Form</strong><p>Embeds a contact/quote form.</p></div>
+    <div class="card"><strong>Contact</strong><p>Phone, email, address info block.</p></div>
+    <div class="card"><strong>HTML</strong><p>Raw HTML embed — maps, iframes, widgets.</p></div>
+    <div class="card"><strong>Blog Preview</strong><p>Latest blog posts from your content.</p></div>
+    <div class="card"><strong>Section Ref</strong><p>Embed a saved/global section by reference.</p></div>
+  </div>
+
+  <h2>Common Commands</h2>
+  <table>
+    <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+    <tbody>
+      <tr><td><code>pnpm dev</code></td><td>Start Astro dev server (port 4321)</td></tr>
+      <tr><td><code>pnpm build</code></td><td>Production build</td></tr>
+      <tr><td><code>pnpm seed</code></td><td>Seed Sanity with starter content</td></tr>
+      <tr><td><code>node scripts/seed-sanity.mjs --dry-run</code></td><td>Preview seed without writing to Sanity</td></tr>
+      <tr><td><code>pnpm typecheck</code></td><td>Astro + TypeScript type check</td></tr>
+      <tr><td><code>pnpm qa</code></td><td>Typecheck + tests + build</td></tr>
+      <tr><td><code>cd studio &amp;&amp; npx sanity dev</code></td><td>Start Sanity Studio (port 3333)</td></tr>
+      <tr><td><code>cd studio &amp;&amp; npx sanity schema deploy</code></td><td>Push schema to Sanity</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Troubleshooting</h2>
+  <div class="card amber">
+    <strong>Page shows blank / no content</strong>
+    <p>Check <code>PUBLIC_SANITY_PROJECT_ID</code> in <code>.env</code>. Run <code>pnpm seed</code> to add starter content.</p>
+  </div>
+  <div class="card amber">
+    <strong>Studio shows no schema types</strong>
+    <p>Run <code>npx sanity schema deploy</code> from the <code>studio/</code> folder.</p>
+  </div>
+  <div class="card amber">
+    <strong>Seed fails with SANITY_TOKEN missing</strong>
+    <p>Create an Editor token at <a href="https://sanity.io/manage" target="_blank">sanity.io/manage</a> and add it to <code>.env</code>.</p>
+  </div>
+  <div class="card red">
+    <strong>pnpm: command not found</strong>
+    <p>Install pnpm: <code>npm install -g pnpm</code></p>
+  </div>
+
+  <h2>Useful Links</h2>
+  <ul>
+    <li><a href="https://sanity.io/manage" target="_blank">sanity.io/manage</a> &mdash; Sanity project dashboard</li>
+    <li><a href="https://docs.astro.build" target="_blank">docs.astro.build</a> &mdash; Astro documentation</li>
+    <li><a href="https://www.sanity.io/docs" target="_blank">sanity.io/docs</a> &mdash; Sanity documentation</li>
+    <li><a href="https://tailwindcss.com/docs" target="_blank">tailwindcss.com/docs</a> &mdash; Tailwind CSS documentation</li>
+  </ul>
+
+</div>
+
+<footer>
+  <p>KapiLabs Astro Framework &mdash; Open this file in any browser for offline reference.</p>
+</footer>
+
+</body>
+</html>

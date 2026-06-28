@@ -1,0 +1,67 @@
+---
+const { settings = {}, utilityMenu } = Astro.props;
+---
+
+<div class="top-bar">
+  <div class="site-container top-bar-inner">
+    <div class="top-bar-left">
+      {settings.phone && <span>{settings.phone}</span>}
+      {settings.email && <span>{settings.email}</span>}
+    </div>
+    <div class="top-bar-right">
+      {utilityMenu?.items?.length > 0 && (
+        <nav class="utility-menu" aria-label="Utility navigation">
+          {utilityMenu.items.map((item: any) => (
+            <a
+              href={item.url}
+              target={item.targetBlank ? "_blank" : undefined}
+              rel={item.targetBlank ? "noopener noreferrer" : undefined}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+      )}
+    </div>
+  </div>
+</div>
+
+<style>
+  .top-bar {
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    font-size: 14px;
+  }
+
+  .top-bar-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 0;
+  }
+
+  .top-bar-left {
+    display: flex;
+    gap: 16px;
+  }
+
+  .top-bar-right {
+    display: flex;
+    gap: 16px;
+  }
+
+  .utility-menu {
+    display: flex;
+    gap: 12px;
+  }
+
+  .utility-menu a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .utility-menu a:hover {
+    text-decoration: underline;
+  }
+</style>

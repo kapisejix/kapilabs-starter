@@ -1,0 +1,19 @@
+---
+import { sanitizeEmbed } from "@kapi/utils/sanitizeHtml";
+
+const { section } = Astro.props;
+const safeHtml = sanitizeEmbed(section.html);
+---
+
+<section class="section html-section">
+  <Fragment set:html={safeHtml} />
+</section>
+
+<style>
+  .html-section {
+    display: grid;
+    gap: var(--section-gap, 20px);
+  }
+</style>
+
+

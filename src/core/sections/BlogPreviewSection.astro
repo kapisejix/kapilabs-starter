@@ -1,0 +1,39 @@
+---
+import { getPosts } from "@kapi/cms";
+import PostCard from "@kapi/components/PostCard.astro";
+
+const { section } = Astro.props;
+const settings = section.settings || {};
+const limit = settings.limit || section.limit || 3;
+const posts = (await getPosts()).slice(0, limit);
+const showHeading = section.heading && !settings.hideTitle;
+---
+
+<section class="section blog-preview-section">
+  {showHeading && <h2>{section.heading}</h2>}
+
+  <div class="post-grid" style={`grid-template-columns: repeat(${settings.columns || 3}, 1fr); gap: ${settings.spacing || "1.5rem"}`}>
+    {posts.map((post) => (
+      <PostCard post={post} />
+    ))}
+  </div>
+</section>
+
+<style>
+  .blog-preview-section {
+    display: grid;
+    gap: var(--section-gap, 24px);
+  }
+
+  .blog-preview-section h2 {
+    margin: 0;
+  }
+
+  @media (max-width: 900px) {
+    .post-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
+
+

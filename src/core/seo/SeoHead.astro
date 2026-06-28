@@ -1,0 +1,70 @@
+---
+import type { CmsImageLike } from "@kapi/cms/types";
+
+const {
+  title,
+  description = "",
+  image,
+  canonicalUrl,
+  noindex = false,
+  nofollow = false,
+  ogType = "website",
+  twitterCard,
+  ogTitle,
+  ogDescription,
+  jsonLd = [],
+  preconnectOrigins = [],
+} = Astro.props as {
+  title: string;
+  description?: string;
+  image?: CmsImageLike;
+  canonicalUrl?: string;
+  noindex?: boolean;
+  nofollow?: boolean;
+  ogType?: "website" | "article";
+  twitterCard?: "summary" | "summary_large_image";
+  ogTitle?: string;
+  ogDescription?: string;
+  jsonLd?: Record<string, unknown>[];
+  preconnectOrigins?: string[];
+};
+
+const img = typeof image === "string" ? image : image?.src || "";
+const card = twitterCard || (img ? "summary_large_image" : "summary");
+
+const resolvedOgTitle = ogTitle || title;
+const resolvedOgDescription = ogDescription || description;
+
+---
+
+{preconnectOrigins.map((origin) => (
+  <link rel="preconnect" href={origin} crossorigin />
+))}
+
+<title>{title}</title>
+{description && <meta name="description" content={description} />}
+{canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+
+<meta property="og:type" content={ogType} />
+<meta property="og:title" content={resolvedOgTitle} />
+{resolvedOgDescription && <meta property="og:description" content={resolvedOgDescription} />}
+{canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
+{img && <meta property="og:image" content={img} />}
+
+<meta name="twitter:card" content={card} />
+<meta name="twitter:title" content={resolvedOgTitle} />
+{resolvedOgDescription && <meta name="twitter:description" content={resolvedOgDescription} />}
+{img && <meta name="twitter:image" content={img} />}
+
+{
+  (noindex || nofollow) && (
+    <meta
+      name="robots"
+      content={`${noindex ? "noindex" : "index"},${nofollow ? "nofollow" : "follow"}`}
+    />
+  )
+}
+
+{jsonLd.map((schema) => (
+  <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+))}

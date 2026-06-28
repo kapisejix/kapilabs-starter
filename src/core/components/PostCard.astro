@@ -1,0 +1,121 @@
+---
+import type { NormalizedPost } from "@kapi/cms";
+import CmsImage from "@kapi/components/CmsImage.astro";
+
+const { post } = Astro.props as {
+  post: NormalizedPost;
+};
+
+const categories = post.categories || [];
+const tags = post.tags || [];
+
+const image =
+  typeof post.archiveImage === "string"
+    ? null
+    : post.archiveImage || (typeof post.featuredImage === "string" ? null : post.featuredImage);
+
+const date = post.publishedAt
+  ? new Date(post.publishedAt).toLocaleDateString()
+  : "";
+---
+
+<article class="card post-card">
+  {image?.src && (
+    <a class="post-card-image" href={`/blog/${post.slug}`} aria-label={post.title}>
+      <CmsImage image={image} alt={post.title} />
+    </a>
+  )}
+
+  <div class="post-card-body">
+    <div class="post-card-meta">
+      {date && <time datetime={post.publishedAt}>{date}</time>}
+
+      {categories.length > 0 && (
+        <span>
+          {categories.map((category: string, index: number) => (
+            <>
+              <a href={`/category/${category}`}>{category}</a>
+              {index < categories.length - 1 && ", "}
+            </>
+          ))}
+        </span>
+      )}
+    </div>
+
+    <h2>
+      <a href={`/blog/${post.slug}`}>{post.title}</a>
+    </h2>
+
+    {post.excerpt && <p>{post.excerpt}</p>}
+
+    {tags.length > 0 && (
+      <div class="post-card-tags">
+        {tags.map((tag: string) => (
+          <a href={`/tag/${tag}`}>#{tag}</a>
+        ))}
+      </div>
+    )}
+
+    <a class="read-more" href={`/blog/${post.slug}`}>Read more</a>
+  </div>
+</article>
+
+<style>
+  .post-card {
+    display: grid;
+    gap: 0;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .post-card-image {
+    display: block;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: var(--color-soft-background, #f9fafb);
+  }
+
+  .post-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .post-card-body {
+    display: grid;
+    gap: 12px;
+    padding: var(--space-md, 1.5rem);
+  }
+
+  .post-card h2 {
+    margin: 0;
+  }
+
+  .post-card p {
+    margin: 0;
+  }
+
+  .post-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: var(--color-muted, #6b7280);
+    font-size: 0.9rem;
+  }
+
+  .post-card-meta a,
+  .post-card-tags a {
+    color: var(--color-secondary, #2563eb);
+  }
+
+  .post-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.9rem;
+  }
+
+  .read-more {
+    font-weight: 800;
+  }
+</style>

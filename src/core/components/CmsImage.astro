@@ -1,0 +1,141 @@
+---
+import type { CmsImage as CmsImageType } from "@kapi/cms/types";
+
+const {
+  image,
+  alt,
+  class: className = "",
+  loading = "lazy",
+  decoding = "async",
+  fetchpriority,
+  showCaption = false,
+  showMetadata = false,
+  usePictureElement = false,
+  blurDataUrl,
+} = Astro.props as {
+  image?: CmsImageType | string | null;
+  alt?: string;
+  class?: string;
+  loading?: "lazy" | "eager";
+  decoding?: "async" | "sync" | "auto";
+  fetchpriority?: "high" | "low" | "auto";
+  showCaption?: boolean;
+  showMetadata?: boolean;
+  usePictureElement?: boolean;
+  blurDataUrl?: string;
+};
+
+const img = typeof image === "string" ? { src: image, alt: alt || "" } : image;
+const finalAlt = alt || img?.alt || "";
+
+const focalX =
+  typeof img?.focalPoint?.x === "number" ? img.focalPoint.x : 0.5;
+
+const focalY =
+  typeof img?.focalPoint?.y === "number" ? img.focalPoint.y : 0.5;
+
+const objectPosition = img?.focalPoint
+  ? `object-position: ${focalX * 100}% ${focalY * 100}%`
+  : undefined;
+
+const blurStyle = blurDataUrl
+  ? `background: url(${blurDataUrl}) center/cover no-repeat;`
+  : "";
+---
+
+{img?.src && (
+  <figure class:list={["cms-image", className]}>
+    {usePictureElement ? (
+      <picture style={blurStyle}>
+        <source srcset={img.src + "?w=800&fmt=avif"} type="image/avif" />
+        <source srcset={img.src + "?w=800&fmt=webp"} type="image/webp" />
+        <img
+          src={img.src}
+          alt={finalAlt}
+          width={img.width}
+          height={img.height}
+          loading={loading}
+          decoding={decoding}
+          fetchpriority={fetchpriority}
+          style={objectPosition}
+        />
+      </picture>
+    ) : (
+      <img
+        src={img.src}
+        alt={finalAlt}
+        width={img.width}
+        height={img.height}
+        loading={loading}
+        decoding={decoding}
+        fetchpriority={fetchpriority}
+        style={objectPosition}
+      />
+    )}
+
+    {showCaption && (img.caption || img.credit || img.photographer) && (
+      <figcaption>
+        {img.caption && <span class="caption-text">{img.caption}</span>}
+        {img.credit && <small class="caption-credit">{img.credit}</small>}
+        {img.photographer && <small class="caption-photographer">Photo: {img.photographer}</small>}
+      </figcaption>
+    )}
+
+    {showMetadata && (img.title || img.description) && (
+      <div class="image-metadata">
+        {img.title && <span class="meta-title">{img.title}</span>}
+        {img.description && <span class="meta-desc">{img.description}</span>}
+        {img.copyright && <small class="meta-copyright">&copy; {img.copyright}</small>}
+      </div>
+    )}
+  </figure>
+)}
+
+<style>
+  .cms-image {
+    margin: 0;
+    position: relative;
+  }
+
+  .cms-image img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  .cms-image picture {
+    display: block;
+    max-width: 100%;
+  }
+
+  .cms-image figcaption {
+    display: grid;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+    color: var(--color-muted, #6b7280);
+    font-size: 0.9rem;
+  }
+
+  .image-metadata {
+    margin-top: 0.5rem;
+    padding: 0.75rem;
+    background: var(--color-soft-background, #f9fafb);
+    border-radius: var(--radius-md, 0.5rem);
+    font-size: 0.85rem;
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .meta-title {
+    font-weight: 600;
+  }
+
+  .meta-desc {
+    color: var(--color-muted, #6b7280);
+  }
+
+  .meta-copyright {
+    color: var(--color-muted, #6b7280);
+    font-size: 0.8rem;
+  }
+</style>

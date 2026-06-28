@@ -1,0 +1,29 @@
+---
+import PostCard from "@kapi/components/PostCard.astro";
+import type { NormalizedPost } from "@kapi/cms";
+
+const {
+  posts = [],
+  title = "Blog",
+} = Astro.props as {
+  posts: NormalizedPost[];
+  title?: string;
+};
+---
+
+<section class="blog-archive">
+  <h1>{title}</h1>
+
+  <div class="post-list">
+    {posts.map((post: NormalizedPost) => (
+      <PostCard post={post} />
+    ))}
+  </div>
+</section>
+
+<style>
+.post-list {
+  display:grid;
+  gap:20px;
+}
+</style>

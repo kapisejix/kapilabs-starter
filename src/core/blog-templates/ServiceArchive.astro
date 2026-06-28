@@ -1,0 +1,69 @@
+---
+const {
+  services = [],
+  title = "Services",
+  description,
+} = Astro.props as {
+  services: { title: string; description?: string; icon?: string }[];
+  title?: string;
+  description?: string;
+};
+---
+
+<section class="service-archive">
+  <h1>{title}</h1>
+  {description && <p class="archive-description">{description}</p>}
+
+  <div class="service-grid">
+    {services.map((service) => (
+      <article class="service-card">
+        {service.icon && <span class="service-icon">{service.icon}</span>}
+        <h2 class="service-title">{service.title}</h2>
+        {service.description && <p class="service-desc">{service.description}</p>}
+      </article>
+    ))}
+  </div>
+</section>
+
+<style>
+  .service-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+
+  .service-card {
+    padding: 2rem;
+    border: 1px solid var(--border, #e5e7eb);
+    border-radius: var(--radius-lg, 1rem);
+    background: var(--color-background, #ffffff);
+    transition: box-shadow 0.2s;
+  }
+
+  .service-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  .service-icon {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 0.75rem;
+  }
+
+  .service-title {
+    margin: 0 0 0.5rem;
+    font-size: 1.25rem;
+  }
+
+  .service-desc {
+    color: var(--color-muted, #6b7280);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  .archive-description {
+    color: var(--color-muted, #6b7280);
+    margin-bottom: 2rem;
+  }
+</style>

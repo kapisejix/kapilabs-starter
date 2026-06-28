@@ -1,0 +1,29 @@
+---
+import SiteLayout from "@kapi/layouts/SiteLayout.astro";
+import { getPosts } from "@kapi/cms";
+
+const posts = await getPosts();
+
+const categories = [...new Set(posts.flatMap((post) => post.categories || []))];
+const tags = [...new Set(posts.flatMap((post) => post.tags || []))];
+---
+
+<SiteLayout title="Taxonomies" description="Categories and tags">
+  <main class="taxonomies-page">
+    <h1>Taxonomies</h1>
+
+    <h2>Categories</h2>
+    <ul>
+      {categories.map((category) => (
+        <li><a href={`/category/${category}`}>{category}</a></li>
+      ))}
+    </ul>
+
+    <h2>Tags</h2>
+    <ul>
+      {tags.map((tag) => (
+        <li><a href={`/tag/${tag}`}>{tag}</a></li>
+      ))}
+    </ul>
+  </main>
+</SiteLayout>

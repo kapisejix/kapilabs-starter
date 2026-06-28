@@ -1,0 +1,13 @@
+﻿---
+import SiteLayout from "@kapi/layouts/SiteLayout.astro";
+import BlogArchive from "@kapi/blog-templates/BlogArchive.astro";
+import { getPosts } from "@kapi/cms";
+
+const posts = await getPosts();
+
+Astro.response.headers.set("Cache-Control", "public, max-age=0, s-maxage=600, stale-while-revalidate=300");
+---
+
+<SiteLayout title="Blog" description="Latest posts">
+  <BlogArchive posts={posts} title="Blog" />
+</SiteLayout>

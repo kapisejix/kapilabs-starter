@@ -1,0 +1,38 @@
+[
+  {
+    "id": "testimonial-sarah",
+    "clientName": "Sarah M.",
+    "role": "Marketing Director",
+    "company": "Brightwave Studio",
+    "testimonialText": "Working with Apex Digital was a game-changer. Our organic traffic tripled within 4 months and the website has become our best lead generation tool.",
+    "source": "google",
+    "rating": 5,
+    "isPublished": true,
+    "isFeatured": true,
+    "reviewDate": "2026-01-15"
+  },
+  {
+    "id": "testimonial-james",
+    "clientName": "James T.",
+    "role": "Founder",
+    "company": "CloudPeak Analytics",
+    "testimonialText": "The team delivered an outstanding website on time and on budget. Their attention to detail and communication throughout the entire project was excellent.",
+    "source": "google",
+    "rating": 5,
+    "isPublished": true,
+    "isFeatured": false,
+    "reviewDate": "2025-11-20"
+  },
+  {
+    "id": "testimonial-lisa",
+    "clientName": "Lisa R.",
+    "role": "CEO",
+    "company": "Verdant Foods",
+    "testimonialText": "Our new brand identity is exactly what we needed. Professional, modern, and immediately recognizable. The Apex Digital team truly understood our vision.",
+    "source": "custom",
+    "rating": 5,
+    "isPublished": true,
+    "isFeatured": true,
+    "reviewDate": "2025-09-05"
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "name": "kapilabs-plugin-gallery",
+  "label": "Gallery Plugin",
+  "version": "1.0.0",
+  "description": "Image gallery section with lightbox support.",
+  "author": "",
+  "dependencies": [],
+  "kapilabs": ">=2.0.0"
+}

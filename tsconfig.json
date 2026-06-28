@@ -1,0 +1,9 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@kapi/*": ["src/theme/*", "src/core/*"]
+    }
+  }
+}
