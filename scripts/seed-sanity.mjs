@@ -42,7 +42,15 @@ function parseEnv(filePath) {
     const eqIdx = trimmed.indexOf("=");
     if (eqIdx === -1) continue;
     const key = trimmed.slice(0, eqIdx).trim();
-    const val = trimmed.slice(eqIdx + 1).trim();
+    // Strip inline comments and surrounding quotes from values
+    let val = trimmed.slice(eqIdx + 1).trim();
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
+    } else {
+      // Remove trailing inline comment (unquoted values only)
+      const commentIdx = val.indexOf(" #");
+      if (commentIdx !== -1) val = val.slice(0, commentIdx).trim();
+    }
     env[key] = val;
   }
   return env;
